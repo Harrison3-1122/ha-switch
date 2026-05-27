@@ -5,7 +5,7 @@ All notable user-facing changes are recorded here.
 This project is still before its first stable release. Until then, entries may
 describe release-candidate scope rather than long-term compatibility guarantees.
 
-## 0.1.0 - 2026-05-27
+## 0.1.1 - 2026-05-27
 
 - Initial MVP release candidate for `any-switch`.
 - This is a macOS-evidenced stage release: macOS Claude OAuth import evidence is

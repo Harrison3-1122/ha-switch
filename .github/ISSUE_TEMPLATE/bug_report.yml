@@ -12,7 +12,7 @@ body:
     attributes:
       label: any-switch version
       description: Output of `any-switch --version`.
-      placeholder: any-switch 0.1.0
+      placeholder: any-switch 0.1.1
     validations:
       required: true
   - type: dropdown

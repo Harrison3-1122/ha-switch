@@ -92,12 +92,12 @@ Deferred items:
 Create and push a semantic version tag:
 
 ```bash
-git tag v0.1.0
-git push origin v0.1.0
+git tag v0.1.1
+git push origin v0.1.1
 ```
 
 The tag must match the package version in `Cargo.toml` with a leading `v`
-prefix. For example, `version = "0.1.0"` must be released from tag `v0.1.0`.
+prefix. For example, `version = "0.1.1"` must be released from tag `v0.1.1`.
 The release workflow checks this before publishing release notes.
 
 ## GitHub Actions Output
