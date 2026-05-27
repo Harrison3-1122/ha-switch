@@ -263,7 +263,8 @@ Definitions declare the local targets an app uses and which trusted handlers can
 capture or write them. This lets new apps reuse the same safety model without
 adding app-specific branches to the core CLI.
 
-For the full model, see [docs/design.md](docs/design.md).
+For the full model, see
+[docs/design.md](https://github.com/riverscn/any-switch/blob/main/docs/design.md).
 
 To inspect or customize app definitions:
 
@@ -277,23 +278,29 @@ any-switch apps validate ~/.any-switch/overrides.d/<app>.yaml
 
 ## More Docs
 
-- [docs/user-guide.md](docs/user-guide.md): practical user guide with common
-  workflows, safety flags, and troubleshooting.
+- [docs/user-guide.md](https://github.com/riverscn/any-switch/blob/main/docs/user-guide.md):
+  practical user guide with common workflows, safety flags, and
+  troubleshooting.
 - [README.zh-CN.md](README.zh-CN.md): simplified Chinese README.
-- [docs/user-guide.zh-CN.md](docs/user-guide.zh-CN.md): simplified Chinese
-  user guide.
-- [docs/design.md](docs/design.md): architecture and safety model.
-- [docs/manual-verification.md](docs/manual-verification.md): real-app checks
-  that cannot be fully proven in CI.
-- [docs/acceptance.md](docs/acceptance.md): acceptance coverage.
-- [docs/evidence-followups.md](docs/evidence-followups.md): deferred manual
-  evidence tracking before full section 13 coverage is claimed.
-- [docs/release.md](docs/release.md): release packaging and signing.
+- [docs/user-guide.zh-CN.md](https://github.com/riverscn/any-switch/blob/main/docs/user-guide.zh-CN.md):
+  simplified Chinese user guide.
+- [docs/design.md](https://github.com/riverscn/any-switch/blob/main/docs/design.md):
+  architecture and safety model.
+- [docs/manual-verification.md](https://github.com/riverscn/any-switch/blob/main/docs/manual-verification.md):
+  real-app checks that cannot be fully proven in CI.
+- [docs/acceptance.md](https://github.com/riverscn/any-switch/blob/main/docs/acceptance.md):
+  acceptance coverage.
+- [docs/evidence-followups.md](https://github.com/riverscn/any-switch/blob/main/docs/evidence-followups.md):
+  deferred manual evidence tracking before full section 13 coverage is claimed.
+- [docs/release.md](https://github.com/riverscn/any-switch/blob/main/docs/release.md):
+  release packaging and signing.
 - [CHANGELOG.md](CHANGELOG.md): user-facing release notes.
-- [CONTRIBUTING.md](CONTRIBUTING.md): development and contribution rules.
-- [.github/ISSUE_TEMPLATE/release_checklist.yml](.github/ISSUE_TEMPLATE/release_checklist.yml):
+- [CONTRIBUTING.md](https://github.com/riverscn/any-switch/blob/main/CONTRIBUTING.md):
+  development and contribution rules.
+- [.github/ISSUE_TEMPLATE/release_checklist.yml](https://github.com/riverscn/any-switch/blob/main/.github/ISSUE_TEMPLATE/release_checklist.yml):
   release evidence checklist for maintainers.
-- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md): community standards.
+- [CODE_OF_CONDUCT.md](https://github.com/riverscn/any-switch/blob/main/CODE_OF_CONDUCT.md):
+  community standards.
 - [SECURITY.md](SECURITY.md): vulnerability reporting.
 
 ## Development

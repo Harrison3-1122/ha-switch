@@ -206,7 +206,8 @@ any-switch status <app>
 
 `any-switch` 可以通过 `apps.d/*.yaml` 扩展应用定义。定义声明应用使用哪些本地目标，以及哪些可信 handler 可以捕获或写入它们。这样新应用可以复用同一套安全模型，而不需要在核心 CLI 中增加 app-specific 分支。
 
-查看完整模型请读 [docs/design.md](docs/design.md)。
+查看完整模型请读
+[docs/design.md](https://github.com/riverscn/any-switch/blob/main/docs/design.md)。
 
 查看或自定义应用定义：
 
@@ -220,16 +221,16 @@ any-switch apps validate ~/.any-switch/overrides.d/<app>.yaml
 
 ## 更多文档
 
-- [docs/user-guide.zh-CN.md](docs/user-guide.zh-CN.md)：中文用户指南，包含常见流程、安全参数和排查说明。
-- [docs/user-guide.md](docs/user-guide.md)：英文用户指南。
-- [docs/design.md](docs/design.md)：架构和安全模型。
-- [docs/manual-verification.md](docs/manual-verification.md)：无法完全在 CI 中证明的真实应用检查。
-- [docs/acceptance.md](docs/acceptance.md)：验收覆盖。
-- [docs/evidence-followups.md](docs/evidence-followups.md)：完整声明第 13 节覆盖前的后续证据跟踪。
-- [docs/release.md](docs/release.md)：发布、打包和签名策略。
+- [docs/user-guide.zh-CN.md](https://github.com/riverscn/any-switch/blob/main/docs/user-guide.zh-CN.md)：中文用户指南，包含常见流程、安全参数和排查说明。
+- [docs/user-guide.md](https://github.com/riverscn/any-switch/blob/main/docs/user-guide.md)：英文用户指南。
+- [docs/design.md](https://github.com/riverscn/any-switch/blob/main/docs/design.md)：架构和安全模型。
+- [docs/manual-verification.md](https://github.com/riverscn/any-switch/blob/main/docs/manual-verification.md)：无法完全在 CI 中证明的真实应用检查。
+- [docs/acceptance.md](https://github.com/riverscn/any-switch/blob/main/docs/acceptance.md)：验收覆盖。
+- [docs/evidence-followups.md](https://github.com/riverscn/any-switch/blob/main/docs/evidence-followups.md)：完整声明第 13 节覆盖前的后续证据跟踪。
+- [docs/release.md](https://github.com/riverscn/any-switch/blob/main/docs/release.md)：发布、打包和签名策略。
 - [CHANGELOG.md](CHANGELOG.md)：面向用户的 release notes。
-- [CONTRIBUTING.md](CONTRIBUTING.md)：开发和贡献规则。
-- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)：社区规范。
+- [CONTRIBUTING.md](https://github.com/riverscn/any-switch/blob/main/CONTRIBUTING.md)：开发和贡献规则。
+- [CODE_OF_CONDUCT.md](https://github.com/riverscn/any-switch/blob/main/CODE_OF_CONDUCT.md)：社区规范。
 - [SECURITY.md](SECURITY.md)：漏洞报告。
 
 ## 开发
