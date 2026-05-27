@@ -50,14 +50,10 @@ checksum="${archive}.sha256"
 archive_tmp="$(mktemp "${output_dir}/.${package}.tar.gz.XXXXXX")"
 checksum_tmp="${archive_tmp}.sha256"
 
-mkdir -p "${package_dir}/docs" "${package_dir}/scripts" "${package_dir}/app_definitions/builtin"
+mkdir -p "${package_dir}"
 cp "${binary}" "${package_dir}/${binary_name}"
 chmod 0755 "${package_dir}/${binary_name}"
-cp README.md CHANGELOG.md CODE_OF_CONDUCT.md CONTRIBUTING.md SECURITY.md LICENSE "${package_dir}/"
-cp docs/user-guide.md docs/design.md docs/release.md docs/acceptance.md docs/evidence-followups.md docs/manual-verification.md docs/manual-evidence-template.md "${package_dir}/docs/"
-cp scripts/manual-evidence.sh scripts/manual-evidence.ps1 "${package_dir}/scripts/"
-chmod 0755 "${package_dir}/scripts/manual-evidence.sh"
-cp src/app_definitions/builtin/*.yaml "${package_dir}/app_definitions/builtin/"
+cp README.md CHANGELOG.md SECURITY.md LICENSE "${package_dir}/"
 
 tar -C "${staging_root}" -czf "${archive_tmp}" "${package}"
 (

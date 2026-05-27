@@ -207,20 +207,15 @@ Every archive also contains:
 
 - `README.md`
 - `CHANGELOG.md`
-- `CODE_OF_CONDUCT.md`
-- `CONTRIBUTING.md`
 - `SECURITY.md`
 - `LICENSE`
-- `docs/user-guide.md`
-- `docs/design.md`
-- `docs/release.md`
-- `docs/acceptance.md`
-- `docs/evidence-followups.md`
-- `docs/manual-verification.md`
-- `docs/manual-evidence-template.md`
-- `scripts/manual-evidence.sh`
-- `scripts/manual-evidence.ps1`
-- `app_definitions/builtin/*.yaml`
+
+Built-in app definitions are compiled into the binary at build time, so release
+archives do not need `app_definitions/builtin/*.yaml` to run. The source
+repository and Cargo source package remain the auditable record for those
+definitions. Development, contribution, design, acceptance, release, and manual
+evidence documents stay in the repository and source package instead of the
+runtime binary archives.
 
 The GitHub Release also contains `any-switch-<tag>-<target>.tar.gz.sha256` next
 to each archive. The release action uses `CHANGELOG.md` as the public release

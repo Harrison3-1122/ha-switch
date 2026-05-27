@@ -796,9 +796,8 @@ fn macos_signing_script_skips_without_blocking_unsigned_artifacts() {
 }
 
 #[test]
-fn release_archive_includes_auditable_builtin_definitions() {
+fn release_archive_is_runtime_package_with_embedded_builtin_definitions() {
     let manifest_dir = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    let workflow = fs::read_to_string(manifest_dir.join(".github/workflows/release.yml")).unwrap();
     let release_doc = fs::read_to_string(manifest_dir.join("docs/release.md")).unwrap();
     let mut builtin_definition_names =
         fs::read_dir(manifest_dir.join("src/app_definitions/builtin"))
@@ -876,25 +875,29 @@ fn release_archive_includes_auditable_builtin_definitions() {
         "any-switch-v9.9.9-test-target/any-switch",
         "any-switch-v9.9.9-test-target/README.md",
         "any-switch-v9.9.9-test-target/CHANGELOG.md",
-        "any-switch-v9.9.9-test-target/CODE_OF_CONDUCT.md",
-        "any-switch-v9.9.9-test-target/CONTRIBUTING.md",
         "any-switch-v9.9.9-test-target/SECURITY.md",
         "any-switch-v9.9.9-test-target/LICENSE",
-        "any-switch-v9.9.9-test-target/docs/user-guide.md",
-        "any-switch-v9.9.9-test-target/docs/design.md",
-        "any-switch-v9.9.9-test-target/docs/release.md",
-        "any-switch-v9.9.9-test-target/docs/acceptance.md",
-        "any-switch-v9.9.9-test-target/docs/evidence-followups.md",
-        "any-switch-v9.9.9-test-target/docs/manual-verification.md",
-        "any-switch-v9.9.9-test-target/docs/manual-evidence-template.md",
-        "any-switch-v9.9.9-test-target/scripts/manual-evidence.sh",
-        "any-switch-v9.9.9-test-target/scripts/manual-evidence.ps1",
     ] {
         assert!(listing.contains(path), "archive missing {path}");
     }
+    for path in [
+        "any-switch-v9.9.9-test-target/CODE_OF_CONDUCT.md",
+        "any-switch-v9.9.9-test-target/CONTRIBUTING.md",
+        "any-switch-v9.9.9-test-target/docs/",
+        "any-switch-v9.9.9-test-target/scripts/",
+        "any-switch-v9.9.9-test-target/app_definitions/",
+    ] {
+        assert!(
+            !listing.contains(path),
+            "runtime archive should not include development/audit path {path}"
+        );
+    }
     for name in builtin_definition_names {
         let path = format!("any-switch-v9.9.9-test-target/app_definitions/builtin/{name}");
-        assert!(listing.contains(&path), "archive missing {path}");
+        assert!(
+            !listing.contains(&path),
+            "builtin definitions are embedded in the binary and should not be duplicated at {path}"
+        );
     }
 
     let checksum_output = std::process::Command::new("shasum")
@@ -946,118 +949,27 @@ fn release_archive_includes_auditable_builtin_definitions() {
         String::from_utf8(version_output.stdout).unwrap().trim(),
         concat!("any-switch ", env!("CARGO_PKG_VERSION"))
     );
-    let packaged_evidence_script = extract_dir
-        .join("any-switch-v9.9.9-test-target")
-        .join("scripts")
-        .join("manual-evidence.sh");
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::PermissionsExt;
-
-        let mode = fs::metadata(&packaged_evidence_script)
-            .unwrap()
-            .permissions()
-            .mode();
-        assert!(
-            mode & 0o111 != 0,
-            "packaged manual-evidence.sh should be directly executable"
-        );
-    }
-    let evidence_help_output = std::process::Command::new(&packaged_evidence_script)
-        .arg("--help")
+    let apps_output = std::process::Command::new(&packaged_binary)
+        .env("ANY_SWITCH_HOME", extract_dir.join("apps-home"))
+        .arg("apps")
         .output()
         .unwrap();
     assert!(
-        evidence_help_output.status.success(),
-        "packaged manual-evidence.sh failed\nstdout:\n{}\nstderr:\n{}",
-        String::from_utf8_lossy(&evidence_help_output.stdout),
-        String::from_utf8_lossy(&evidence_help_output.stderr)
+        apps_output.status.success(),
+        "packaged binary apps failed\nstdout:\n{}\nstderr:\n{}",
+        String::from_utf8_lossy(&apps_output.stdout),
+        String::from_utf8_lossy(&apps_output.stderr)
     );
-    assert!(String::from_utf8(evidence_help_output.stderr)
-        .unwrap()
-        .contains("usage: manual-evidence.sh"));
-    let evidence_home = extract_dir.join("manual-evidence-home");
-    fs::create_dir_all(&evidence_home).unwrap();
-    let evidence_path = extract_dir.join("manual-evidence-test.md");
-    let evidence_output = std::process::Command::new(&packaged_evidence_script)
-        .current_dir(extract_dir.join("any-switch-v9.9.9-test-target"))
-        .env("HOME", &evidence_home)
-        .env("ANY_SWITCH_TEST_HOME", &evidence_home)
-        .env("ANY_SWITCH_BIN", &packaged_binary)
-        .env("PATH", "/usr/bin:/bin")
-        .env_remove("ANY_SWITCH_HOME")
-        .arg(&evidence_path)
-        .output()
-        .unwrap();
-    assert!(
-        evidence_output.status.success(),
-        "packaged manual-evidence.sh generation failed\nstdout:\n{}\nstderr:\n{}",
-        String::from_utf8_lossy(&evidence_output.stdout),
-        String::from_utf8_lossy(&evidence_output.stderr)
-    );
-    let evidence = fs::read_to_string(&evidence_path).unwrap();
-    assert!(
-        evidence.contains(
-            "Email addresses, UUID-like identifiers, common JSON identity names, and keychain account labels"
-        )
-    );
-    assert!(evidence.contains("ANY_SWITCH_HOME` note: temporary; removed when this script exits"));
-    assert!(evidence.contains("## any-switch Apps"));
-    assert!(evidence.contains("## Evidence Summary"));
-    assert!(evidence.contains("docs/evidence-followups.md"));
-    assert!(evidence.contains("### Current-Stage Release Blockers"));
-    assert!(evidence.contains("### Deferred Follow-Up Evidence"));
-    assert!(evidence.contains("## Item 2: Claude OAuth Import On macOS"));
-    assert!(evidence.contains("any-switch import-current claude manual-macos --kind oauth_capture"));
-    assert!(!evidence
-        .contains("any-switch import-current claude manual-macos --kind oauth_capture --yes"));
-    assert!(evidence.contains("## Deferred Full-Coverage Experiments"));
-    assert!(evidence.contains("not current-stage release blockers"));
-    assert!(evidence.contains("## Item 3: Claude OAuth Import On Linux"));
-    assert!(evidence.contains("any-switch import-current claude manual-linux --kind oauth_capture"));
-    assert!(!evidence
-        .contains("any-switch import-current claude manual-linux --kind oauth_capture --yes"));
-    assert!(evidence.contains("## Windows Release Smoke Test"));
-    assert!(evidence.contains("## Preflight E: Codex External Restore Flow"));
-    assert!(evidence.contains("any-switch import-current codex manual-codex-refresh --kind auto"));
-    assert!(!evidence
-        .contains("any-switch import-current codex manual-codex-refresh --kind auto --yes"));
-    assert!(evidence.contains("## Final Decision"));
-    let temporary_home = evidence
-        .lines()
-        .find_map(|line| line.strip_prefix("- `ANY_SWITCH_HOME` used: "))
-        .expect("manual evidence must record ANY_SWITCH_HOME");
-    assert!(
-        !std::path::Path::new(temporary_home).exists(),
-        "manual-evidence.sh should remove its temporary ANY_SWITCH_HOME"
-    );
+    let apps = String::from_utf8(apps_output.stdout).unwrap();
+    assert!(apps.contains("claude\tSystem"));
+    assert!(apps.contains("codex\tSystem"));
 
-    assert!(workflow.contains("scripts/package-release.sh"));
-    assert!(release_doc.contains("app_definitions/builtin/*.yaml"));
-    assert!(release_doc.contains("docs/evidence-followups.md"));
-    assert!(release_doc.contains("scripts/manual-evidence.ps1"));
-    assert!(release_doc.contains("powershell -NoProfile -ExecutionPolicy Bypass -File"));
-    let powershell_evidence = fs::read_to_string(
-        extract_dir
-            .join("any-switch-v9.9.9-test-target")
-            .join("scripts")
-            .join("manual-evidence.ps1"),
-    )
-    .unwrap();
-    assert!(powershell_evidence.contains("[Alias(\"h\")]"));
-    assert!(powershell_evidence.contains("[switch]$Help"));
-    assert!(powershell_evidence.contains("$PSScriptRoot"));
-    assert!(powershell_evidence.contains("any-switch.exe"));
-    assert!(powershell_evidence.contains("organizationName"));
-    assert!(powershell_evidence.contains("<identity>"));
-    assert!(powershell_evidence.contains("account=<identity>"));
-    assert!(powershell_evidence.contains("## Evidence Summary"));
-    assert!(powershell_evidence.contains("docs/evidence-followups.md"));
-    assert!(powershell_evidence.contains("### Current-Stage Release Blockers"));
-    assert!(powershell_evidence.contains("### Deferred Follow-Up Evidence"));
-    assert!(powershell_evidence.contains("## Deferred Full-Coverage Experiments"));
-    assert!(powershell_evidence.contains("## Windows Release Smoke Test"));
-    assert!(powershell_evidence.contains("## Final Decision"));
+    assert!(release_doc.contains("Built-in app definitions are compiled into the binary"));
+    assert!(release_doc.contains("archives do not need"));
+    assert!(release_doc.contains("`app_definitions/builtin/*.yaml`"));
+    assert!(
+        release_doc.contains("Development, contribution, design, acceptance, release, and manual")
+    );
 }
 
 #[test]
