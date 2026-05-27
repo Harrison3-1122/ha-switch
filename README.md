@@ -1,5 +1,7 @@
 # any-switch
 
+[简体中文](README.zh-CN.md)
+
 `any-switch` switches local app profiles and state.
 
 Use it when one app has several local setups and you want to move between them
@@ -277,6 +279,9 @@ any-switch apps validate ~/.any-switch/overrides.d/<app>.yaml
 
 - [docs/user-guide.md](docs/user-guide.md): practical user guide with common
   workflows, safety flags, and troubleshooting.
+- [README.zh-CN.md](README.zh-CN.md): simplified Chinese README.
+- [docs/user-guide.zh-CN.md](docs/user-guide.zh-CN.md): simplified Chinese
+  user guide.
 - [docs/design.md](docs/design.md): architecture and safety model.
 - [docs/manual-verification.md](docs/manual-verification.md): real-app checks
   that cannot be fully proven in CI.

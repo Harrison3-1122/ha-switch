@@ -1,5 +1,7 @@
 # User Guide
 
+[简体中文](user-guide.zh-CN.md)
+
 This guide explains how to use `any-switch` as an everyday local app profile
 switcher. It avoids implementation details; see `docs/design.md` when you need
 the architecture and safety model.
@@ -25,49 +27,41 @@ the app normally, then use `any-switch` to save and replay the local state.
 
 ## First Run
 
-Current release binaries support Linux x86_64, macOS Intel, macOS Apple
-Silicon, and Windows x86_64.
-
 The current release is a macOS-evidenced stage release. macOS Claude OAuth
 import has real local evidence; broader restart checks plus Linux and Windows
 real-app evidence are tracked as follow-up work before the project claims full
 `docs/design.md` section 13 coverage.
 
-After downloading a release archive, verify the checksum before using the
-binary, then extract it and check the executable:
+The recommended installation path is source compilation through Cargo or npm.
+This avoids distributing unsigned macOS and Windows binaries.
+
+Install Rust first:
 
 ```bash
-if command -v shasum >/dev/null 2>&1; then
-  shasum -a 256 -c any-switch-<tag>-<target>.tar.gz.sha256
-else
-  sha256sum -c any-switch-<tag>-<target>.tar.gz.sha256
-fi
-tar -xzf any-switch-<tag>-<target>.tar.gz
-./any-switch-<tag>-<target>/any-switch --version
+rustup toolchain install 1.95.0
 ```
 
-On Windows, verify the hash in PowerShell, extract the archive, and run the
-`.exe`:
+Install with Cargo:
 
-```powershell
-$archive = ".\any-switch-<tag>-x86_64-pc-windows-msvc.tar.gz"
-$expected = ((Get-Content "${archive}.sha256") -split "\s+")[0].ToLowerInvariant()
-$actual = (Get-FileHash $archive -Algorithm SHA256).Hash.ToLowerInvariant()
-if ($actual -ne $expected) { throw "checksum mismatch" }
-tar -xzf .\any-switch-<tag>-x86_64-pc-windows-msvc.tar.gz
-.\any-switch-<tag>-x86_64-pc-windows-msvc\any-switch.exe --version
+```bash
+cargo install any-switch --locked
 ```
 
-When generating Windows manual evidence from the extracted archive, prefer the
-same execution-policy-safe invocation used by CI:
+Or install through npm. The npm package compiles this Rust project locally with
+Cargo during installation:
 
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File `
-  .\any-switch-<tag>-x86_64-pc-windows-msvc\scripts\manual-evidence.ps1 `
-  manual-evidence-<tag>-windows.md
+```bash
+npm install -g any-switch
+any-switch --version
 ```
 
-Check which apps this binary knows about:
+For local development, build from a checkout:
+
+```bash
+cargo install --path .
+```
+
+Check which apps this build knows about:
 
 ```bash
 any-switch apps

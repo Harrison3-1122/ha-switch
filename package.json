@@ -32,6 +32,8 @@
     "Cargo.lock",
     "rust-toolchain.toml",
     "README.md",
+    "README.zh-CN.md",
+    "docs/user-guide.zh-CN.md",
     "CHANGELOG.md",
     "SECURITY.md",
     "LICENSE"
