@@ -9,6 +9,7 @@ const root = path.resolve(__dirname, "..");
 const vendorDir = path.join(root, "vendor");
 const binaryName = process.platform === "win32" ? "any-switch.exe" : "any-switch";
 const binaryPath = path.join(vendorDir, binaryName);
+const strict = process.argv.includes("--strict");
 
 function commandExists(command) {
   const probe = process.platform === "win32" ? "where" : "command";
@@ -67,5 +68,8 @@ try {
   main();
 } catch (error) {
   console.error(`any-switch: ${error.message}`);
-  process.exit(1);
+  if (strict) {
+    process.exit(1);
+  }
+  console.error("any-switch: install will finish, but the command will build again when first run.");
 }

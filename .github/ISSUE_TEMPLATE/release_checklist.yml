@@ -12,7 +12,7 @@ body:
     attributes:
       label: Version
       description: Version and tag being prepared.
-      placeholder: v0.1.1
+      placeholder: v0.1.2
     validations:
       required: true
   - type: dropdown

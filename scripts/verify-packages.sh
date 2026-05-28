@@ -95,3 +95,26 @@ echo "==> verifying npx execution from packed tarball"
 npm_config_cache="${npm_cache}" npx --yes --package "${npm_tarball_path}" any-switch --version | grep -Fx "any-switch ${version}"
 ANY_SWITCH_HOME="${state_root}/npx-home" npm_config_cache="${npm_cache}" npx --yes --package "${npm_tarball_path}" any-switch apps | grep -Eq '(^|[[:space:]])claude([[:space:]]|$)'
 ANY_SWITCH_HOME="${state_root}/npx-home" npm_config_cache="${npm_cache}" npx --yes --package "${npm_tarball_path}" any-switch apps | grep -Eq '(^|[[:space:]])codex([[:space:]]|$)'
+
+echo "==> verifying npx error without Rust"
+npm_no_rust_bin="${tmp_root}/npm-no-rust-bin"
+mkdir -p "${npm_no_rust_bin}"
+ln -s "$(command -v node)" "${npm_no_rust_bin}/node"
+ln -s "$(command -v npm)" "${npm_no_rust_bin}/npm"
+ln -s "$(command -v npx)" "${npm_no_rust_bin}/npx"
+no_rust_path="${npm_no_rust_bin}:/usr/bin:/bin"
+if env PATH="${no_rust_path}" bash -c 'command -v cargo >/dev/null 2>&1'; then
+  echo "could not hide cargo from PATH for no-Rust npm verification" >&2
+  exit 1
+fi
+no_rust_output="${tmp_root}/npx-no-rust.txt"
+set +e
+ANY_SWITCH_HOME="${state_root}/npx-no-rust-home" PATH="${no_rust_path}" npm_config_cache="${tmp_root}/npm-cache-no-rust" npx --yes --package "${npm_tarball_path}" any-switch --version >"${no_rust_output}" 2>&1
+no_rust_status="$?"
+set -e
+if [[ "${no_rust_status}" -eq 0 ]]; then
+  echo "npx without Rust unexpectedly succeeded" >&2
+  cat "${no_rust_output}" >&2
+  exit 1
+fi
+grep -F "Rust toolchain is required to install any-switch from npm." "${no_rust_output}" >/dev/null

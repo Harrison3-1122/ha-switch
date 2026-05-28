@@ -5,6 +5,15 @@ All notable user-facing changes are recorded here.
 This project is still before its first stable release. Until then, entries may
 describe release-candidate scope rather than long-term compatibility guarantees.
 
+## 0.1.2 - 2026-05-28
+
+- Fixed `npx any-switch` reporting when Rust is not installed. npm suppresses
+  failing lifecycle-script output for this path, so npm postinstall now treats
+  source-build failures as deferred and the runtime shim reports the actionable
+  Rust installation error when the command is executed.
+- Package verification now covers the no-Rust `npx` path so this failure mode
+  cannot silently regress.
+
 ## 0.1.1 - 2026-05-27
 
 - Initial MVP release candidate for `any-switch`.

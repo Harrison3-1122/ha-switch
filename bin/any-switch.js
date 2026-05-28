@@ -11,7 +11,7 @@ const binaryName = process.platform === "win32" ? "any-switch.exe" : "any-switch
 const binaryPath = path.join(root, "vendor", binaryName);
 
 if (!fs.existsSync(binaryPath)) {
-  const install = childProcess.spawnSync(process.execPath, [installScript], {
+  const install = childProcess.spawnSync(process.execPath, [installScript, "--strict"], {
     stdio: "inherit",
     env: {
       ...process.env,
