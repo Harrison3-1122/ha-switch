@@ -743,10 +743,7 @@ mod tests {
         let path = dir.path().join("config.toml");
         fs::write(&path, "model_provider = \"old\"\n").unwrap();
         let mut fields = IndexMap::new();
-        fields.insert(
-            "model".to_string(),
-            Value::String("gpt-5.5".to_string()),
-        );
+        fields.insert("model".to_string(), Value::String("gpt-5.5".to_string()));
         fields.insert(
             "model_provider".to_string(),
             Value::String("ikun".to_string()),

@@ -5,7 +5,7 @@ use crate::app_definitions::{
 };
 use crate::backup;
 use crate::capture::{self, CaptureSourceSpec, CaptureSpec};
-use crate::codex_history::{self, MigrationOptions};
+use crate::codex_history::{self, MigrationOptions, ProviderRewriteOptions};
 use crate::handlers;
 use crate::identity;
 use crate::lock::{self, FileLock};
@@ -276,6 +276,40 @@ enum CodexHistoryCommand {
             help = "Confirm migration non-interactively; required unless --dry-run is used"
         )]
         yes: bool,
+    },
+    #[command(
+        name = "rewrite-providers",
+        about = "Rewrite Codex thread provider labels in history state",
+        long_about = "Rewrite Codex thread provider labels in history state.\n\nThis is a manual repair tool for Codex Desktop history visibility when multiple API-key providers should share one history bucket. It updates both state_5.sqlite and the session JSONL metadata Codex can use to rebuild that SQLite index. By default it refuses to write while Codex appears to be running, creates backups before updating, and only rewrites providers that are not excluded and are not already the target provider.\n\nTypical use:\n  ha-switch codex-history rewrite-providers --to ha-shared --exclude openai --dry-run\n  ha-switch codex-history rewrite-providers --to ha-shared --exclude openai --yes"
+    )]
+    RewriteProviders {
+        #[arg(long, help = "Target provider label to write into Codex history")]
+        to: String,
+        #[arg(
+            long,
+            help = "Provider label to leave untouched; repeatable, for example --exclude openai"
+        )]
+        exclude: Vec<String>,
+        #[arg(long, help = "Codex home; defaults to ${CODEX_HOME:-~/.codex}")]
+        codex_home: Option<PathBuf>,
+        #[arg(
+            long,
+            help = "Explicit state_5.sqlite path; defaults to <codex-home>/state_5.sqlite"
+        )]
+        database: Option<PathBuf>,
+        #[arg(long, help = "Show what would change without writing the database")]
+        dry_run: bool,
+        #[arg(
+            long,
+            short = 'y',
+            help = "Confirm provider rewrite non-interactively; required unless --dry-run is used"
+        )]
+        yes: bool,
+        #[arg(
+            long,
+            help = "Allow rewriting while Codex appears to be running; not recommended"
+        )]
+        allow_running: bool,
     },
 }
 
@@ -609,6 +643,85 @@ fn codex_history_command(paths: &Paths, command: CodexHistoryCommand) -> Result<
                         "session_index_added": summary.session_index_added,
                         "sessions_copied": summary.sessions_copied,
                         "sessions_skipped": summary.sessions_skipped,
+                        "ok": true
+                    }),
+                )?;
+            }
+            Ok(())
+        }
+        CodexHistoryCommand::RewriteProviders {
+            to,
+            exclude,
+            codex_home,
+            database,
+            dry_run,
+            yes,
+            allow_running,
+        } => {
+            if !dry_run && !yes {
+                return Err(anyhow!(
+                    "ConfirmationRequired: pass --dry-run to preview or --yes to rewrite Codex history providers"
+                ));
+            }
+            if !dry_run && !allow_running {
+                if let Some(mut message) = codex_history::running_codex_message()? {
+                    message.push_str(
+                        "\n\nProviderRewriteUnsafe: close Codex before rewriting state_5.sqlite so the client does not keep stale history/provider state in memory or write it back afterwards.\n\nNext steps:\n  - Quit Codex completely and retry.\n  - If this is a false positive, retry with --allow-running.",
+                    );
+                    return Err(anyhow!(message));
+                }
+            }
+            let codex_home = codex_home.unwrap_or_else(codex_history::default_codex_home);
+            let summary = codex_history::rewrite_providers(&ProviderRewriteOptions {
+                codex_home,
+                database,
+                to,
+                exclude,
+                dry_run,
+            })?;
+            println!(
+                "codex_history\tprovider-rewrite\t{}\tdatabase={}",
+                if summary.dry_run {
+                    "dry-run"
+                } else {
+                    "rewritten"
+                },
+                summary.database.display()
+            );
+            println!(
+                "providers\tto={}\texcluded={}\tchanged={}",
+                summary.to,
+                if summary.excluded.is_empty() {
+                    "-".to_string()
+                } else {
+                    summary.excluded.join(",")
+                },
+                summary.changed
+            );
+            for provider in &summary.providers {
+                println!("provider\tfrom={}\tcount={}", provider.from, provider.count);
+            }
+            println!("session_files\tchanged={}", summary.session_files_changed);
+            if let Some(backup) = &summary.backup {
+                println!("backup\t{}", backup.display());
+            }
+            if let Some(backup_dir) = &summary.session_backup_dir {
+                println!("session_backup\t{}", backup_dir.display());
+            }
+            if !summary.dry_run {
+                append_history(
+                    paths,
+                    &json!({
+                        "operation_id": uuid::Uuid::now_v7().to_string(),
+                        "time": Utc::now(),
+                        "operation": "codex-history-rewrite-providers",
+                        "database": summary.database,
+                        "to": summary.to,
+                        "excluded": summary.excluded,
+                        "changed": summary.changed,
+                        "session_files_changed": summary.session_files_changed,
+                        "backup": summary.backup,
+                        "session_backup_dir": summary.session_backup_dir,
                         "ok": true
                     }),
                 )?;

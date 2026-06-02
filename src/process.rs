@@ -235,7 +235,7 @@ fn path_basename(path: &str) -> &str {
     path.rsplit(['/', '\\']).next().unwrap_or(path)
 }
 
-#[cfg(windows)]
+#[cfg(any(windows, target_os = "macos"))]
 fn process_name_equals(actual: &str, expected: &str) -> bool {
     actual
         .strip_suffix(".exe")
@@ -243,7 +243,7 @@ fn process_name_equals(actual: &str, expected: &str) -> bool {
         .eq_ignore_ascii_case(expected.strip_suffix(".exe").unwrap_or(expected))
 }
 
-#[cfg(not(windows))]
+#[cfg(not(any(windows, target_os = "macos")))]
 fn process_name_equals(actual: &str, expected: &str) -> bool {
     actual == expected
 }
@@ -296,6 +296,16 @@ mod tests {
             "/usr/local/bin/codex run"
         ));
         assert!(!process_name_matches("codex", "codex-helper", ""));
+    }
+
+    #[cfg(target_os = "macos")]
+    #[test]
+    fn matches_macos_app_process_names_case_insensitively() {
+        assert!(process_name_matches(
+            "codex",
+            "/Applications/Codex.app/Contents/MacOS/Codex",
+            ""
+        ));
     }
 
     #[cfg(windows)]
