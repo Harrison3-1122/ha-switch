@@ -56,6 +56,6 @@ jobs:
       - name: Package Windows release archive
         shell: bash
         run: |
-          bash scripts/package-release.sh ci-windows x86_64-pc-windows-msvc target/x86_64-pc-windows-msvc/release/any-switch.exe .
-          tar -tzf any-switch-ci-windows-x86_64-pc-windows-msvc.tar.gz > windows-package-list.txt
-          grep -Fx "any-switch-ci-windows-x86_64-pc-windows-msvc/any-switch.exe" windows-package-list.txt
+          bash scripts/package-release.sh ci-windows x86_64-pc-windows-msvc target/x86_64-pc-windows-msvc/release/ha-switch.exe .
+          tar -tzf ha-switch-ci-windows-x86_64-pc-windows-msvc.tar.gz > windows-package-list.txt
+          grep -Fx "ha-switch-ci-windows-x86_64-pc-windows-msvc/ha-switch.exe" windows-package-list.txt

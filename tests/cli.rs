@@ -11,9 +11,9 @@ use tempfile::tempdir;
 #[test]
 fn add_rejects_sensitive_field_argument() {
     let switch_home = tempdir().unwrap();
-    let mut cmd = Command::cargo_bin("any-switch").unwrap();
-    cmd.env("ANY_SWITCH_HOME", switch_home.path())
-        .env("ANY_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
+    let mut cmd = Command::cargo_bin("ha-switch").unwrap();
+    cmd.env("HA_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
         .args([
             "add",
             "codex",
@@ -37,10 +37,10 @@ fn add_rejects_invalid_field_keys() {
         "nested.=value",
         "nested..value=x",
     ] {
-        Command::cargo_bin("any-switch")
+        Command::cargo_bin("ha-switch")
             .unwrap()
-            .env("ANY_SWITCH_HOME", switch_home.path())
-            .env("ANY_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
+            .env("HA_SWITCH_HOME", switch_home.path())
+            .env("HA_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
             .args([
                 "add",
                 "codex",
@@ -59,10 +59,10 @@ fn add_rejects_invalid_field_keys() {
 #[test]
 fn add_does_not_require_yes_and_rejects_unused_yes() {
     let switch_home = tempdir().unwrap();
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
-        .env("ANY_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
+        .env("HA_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
         .env("TEST_API_KEY", "sk-test")
         .args([
             "add",
@@ -79,10 +79,10 @@ fn add_does_not_require_yes_and_rejects_unused_yes() {
         .success()
         .stdout(contains("added codex-without-yes"));
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
-        .env("ANY_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
+        .env("HA_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
         .env("TEST_API_KEY", "sk-test")
         .args([
             "add",
@@ -112,11 +112,11 @@ fn use_without_yes_requires_confirmation_in_non_tty() {
         .prefix(".test-codex-")
         .tempdir_in(&cwd)
         .unwrap();
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
-        .env("ANY_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
+        .env("HA_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
         .env("TEST_API_KEY", "sk-test")
         .args([
             "add",
@@ -132,9 +132,9 @@ fn use_without_yes_requires_confirmation_in_non_tty() {
         .assert()
         .success();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["use", "codex-noninteractive"])
@@ -149,10 +149,10 @@ fn use_without_yes_requires_confirmation_in_non_tty() {
 #[test]
 fn show_redacts_secret_fields() {
     let switch_home = tempdir().unwrap();
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
-        .env("ANY_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
+        .env("HA_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
         .env("TEST_API_KEY", "sk-test-secret")
         .args([
             "add",
@@ -168,10 +168,10 @@ fn show_redacts_secret_fields() {
         .assert()
         .success();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
-        .env("ANY_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
+        .env("HA_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
         .args(["show", "codex-safe"])
         .assert()
         .success()
@@ -182,10 +182,10 @@ fn show_redacts_secret_fields() {
 #[test]
 fn list_json_redacts_secret_fields() {
     let switch_home = tempdir().unwrap();
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
-        .env("ANY_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
+        .env("HA_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
         .env("TEST_API_KEY", "sk-list-secret")
         .args([
             "add",
@@ -201,10 +201,10 @@ fn list_json_redacts_secret_fields() {
         .assert()
         .success();
 
-    let output = Command::cargo_bin("any-switch")
+    let output = Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
-        .env("ANY_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
+        .env("HA_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
         .args(["list", "codex", "--json"])
         .output()
         .unwrap();
@@ -219,19 +219,19 @@ fn list_json_redacts_secret_fields() {
 fn list_rejects_unknown_app_filter() {
     let switch_home = tempdir().unwrap();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
-        .env("ANY_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
+        .env("HA_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
         .args(["list", "doesnotexist"])
         .assert()
         .failure()
         .stderr(contains("AppNotFound: doesnotexist"));
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
-        .env("ANY_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
+        .env("HA_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
         .args(["list", "doesnotexist", "--json"])
         .assert()
         .failure()
@@ -250,10 +250,10 @@ fn use_and_status_do_not_modify_profiles_yaml_for_static_profiles() {
         .tempdir_in(&cwd)
         .unwrap();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
-        .env("ANY_SWITCH_TEST_HOME", &cwd)
+        .env("HA_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_TEST_HOME", &cwd)
         .env("TEST_API_KEY", "sk-no-profile-write")
         .args([
             "add",
@@ -274,10 +274,10 @@ fn use_and_status_do_not_modify_profiles_yaml_for_static_profiles() {
     let before_modified = fs::metadata(&profiles_path).unwrap().modified().unwrap();
     std::thread::sleep(std::time::Duration::from_millis(20));
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
-        .env("ANY_SWITCH_TEST_HOME", &cwd)
+        .env("HA_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_TEST_HOME", &cwd)
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["use", "codex-stable", "--yes"])
@@ -290,10 +290,10 @@ fn use_and_status_do_not_modify_profiles_yaml_for_static_profiles() {
         before_modified
     );
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
-        .env("ANY_SWITCH_TEST_HOME", &cwd)
+        .env("HA_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_TEST_HOME", &cwd)
         .env("CODEX_HOME", codex_home.path())
         .args(["status", "codex"])
         .assert()
@@ -314,16 +314,16 @@ fn secret_file_must_resolve_inside_home() {
         .prefix(".test-home-")
         .tempdir_in(&cwd)
         .unwrap();
-    let switch_home = home.path().join(".any-switch");
+    let switch_home = home.path().join(".ha-switch");
     let outside = tempdir().unwrap();
     let secret = outside.path().join("secret.txt");
     fs::write(&secret, "sk-outside").unwrap();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
         .env("HOME", home.path())
-        .env("ANY_SWITCH_TEST_HOME", home.path())
-        .env("ANY_SWITCH_HOME", &switch_home)
+        .env("HA_SWITCH_TEST_HOME", home.path())
+        .env("HA_SWITCH_HOME", &switch_home)
         .args([
             "add",
             "codex",
@@ -348,18 +348,18 @@ fn secret_file_rejects_group_or_other_permissions() {
         .prefix(".test-home-")
         .tempdir_in(&cwd)
         .unwrap();
-    let switch_home = home.path().join(".any-switch");
+    let switch_home = home.path().join(".ha-switch");
     let secret = home.path().join("secret.txt");
     fs::write(&secret, "sk-wide").unwrap();
     let mut permissions = fs::metadata(&secret).unwrap().permissions();
     permissions.set_mode(0o644);
     fs::set_permissions(&secret, permissions).unwrap();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
         .env("HOME", home.path())
-        .env("ANY_SWITCH_TEST_HOME", home.path())
-        .env("ANY_SWITCH_HOME", &switch_home)
+        .env("HA_SWITCH_TEST_HOME", home.path())
+        .env("HA_SWITCH_HOME", &switch_home)
         .args([
             "add",
             "codex",
@@ -379,10 +379,10 @@ fn secret_file_rejects_group_or_other_permissions() {
 #[test]
 fn secret_prompt_requires_tty() {
     let switch_home = tempdir().unwrap();
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
-        .env("ANY_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
+        .env("HA_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
         .args([
             "add",
             "codex",
@@ -416,9 +416,9 @@ fn target_write_follows_existing_final_symlink() {
     fs::write(&real_auth, "{}").unwrap();
     std::os::unix::fs::symlink(&real_auth, &auth_link).unwrap();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("TEST_API_KEY", "sk-symlink")
         .args([
@@ -435,9 +435,9 @@ fn target_write_follows_existing_final_symlink() {
         .assert()
         .success();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["use", "codex-symlink", "--yes"])
@@ -460,13 +460,13 @@ fn status_reports_matched_with_overrides_without_leaking_env_secret() {
         .prefix(".test-home-")
         .tempdir_in(&cwd)
         .unwrap();
-    let switch_home = home.path().join(".any-switch");
+    let switch_home = home.path().join(".ha-switch");
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
         .env("HOME", home.path())
-        .env("ANY_SWITCH_TEST_HOME", home.path())
-        .env("ANY_SWITCH_HOME", &switch_home)
+        .env("HA_SWITCH_TEST_HOME", home.path())
+        .env("HA_SWITCH_HOME", &switch_home)
         .env("PROFILE_TOKEN", "profile-token")
         .args([
             "add",
@@ -482,21 +482,21 @@ fn status_reports_matched_with_overrides_without_leaking_env_secret() {
         .assert()
         .success();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
         .env("HOME", home.path())
-        .env("ANY_SWITCH_TEST_HOME", home.path())
-        .env("ANY_SWITCH_HOME", &switch_home)
+        .env("HA_SWITCH_TEST_HOME", home.path())
+        .env("HA_SWITCH_HOME", &switch_home)
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["use", "claude-proxy", "--yes"])
         .assert()
         .success();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
         .env("HOME", home.path())
-        .env("ANY_SWITCH_TEST_HOME", home.path())
-        .env("ANY_SWITCH_HOME", &switch_home)
+        .env("HA_SWITCH_TEST_HOME", home.path())
+        .env("HA_SWITCH_HOME", &switch_home)
         .env("ANTHROPIC_AUTH_TOKEN", "external-secret")
         .args(["status", "claude", "--json"])
         .assert()
@@ -513,7 +513,7 @@ fn status_reports_managed_policy_overrides_without_leaking_secret_values() {
         .prefix(".test-home-")
         .tempdir_in(&cwd)
         .unwrap();
-    let switch_home = home.path().join(".any-switch");
+    let switch_home = home.path().join(".ha-switch");
     let managed_dir = tempfile::Builder::new()
         .prefix(".test-managed-claude-")
         .tempdir_in(&cwd)
@@ -539,11 +539,11 @@ fn status_reports_managed_policy_overrides_without_leaking_secret_values() {
     )
     .unwrap();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
         .env("HOME", home.path())
-        .env("ANY_SWITCH_TEST_HOME", home.path())
-        .env("ANY_SWITCH_HOME", &switch_home)
+        .env("HA_SWITCH_TEST_HOME", home.path())
+        .env("HA_SWITCH_HOME", &switch_home)
         .env("PROFILE_TOKEN", "profile-token")
         .args([
             "add",
@@ -559,21 +559,21 @@ fn status_reports_managed_policy_overrides_without_leaking_secret_values() {
         .assert()
         .success();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
         .env("HOME", home.path())
-        .env("ANY_SWITCH_TEST_HOME", home.path())
-        .env("ANY_SWITCH_HOME", &switch_home)
+        .env("HA_SWITCH_TEST_HOME", home.path())
+        .env("HA_SWITCH_HOME", &switch_home)
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["use", "claude-managed", "--yes"])
         .assert()
         .success();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
         .env("HOME", home.path())
-        .env("ANY_SWITCH_TEST_HOME", home.path())
-        .env("ANY_SWITCH_HOME", &switch_home)
+        .env("HA_SWITCH_TEST_HOME", home.path())
+        .env("HA_SWITCH_HOME", &switch_home)
         .env(
             "ANY_SWITCH_TEST_CLAUDE_MANAGED_SETTINGS_DIR",
             managed_dir.path(),
@@ -593,48 +593,48 @@ fn status_reports_managed_policy_overrides_without_leaking_secret_values() {
 fn status_no_active_includes_import_current_hint() {
     let switch_home = tempdir().unwrap();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
-        .env("ANY_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
+        .env("HA_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
         .args(["status", "codex"])
         .assert()
         .success()
         .stdout(contains("codex\tno-active"))
         .stdout(contains(
-            "recommended next step is `any-switch import-current codex",
+            "recommended next step is `ha-switch import-current codex",
         ))
-        .stdout(contains("not `any-switch use"));
+        .stdout(contains("not `ha-switch use"));
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
-        .env("ANY_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
+        .env("HA_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
         .args(["status", "codex", "--json"])
         .assert()
         .success()
         .stdout(contains("\"status\": \"no-active\""))
         .stdout(contains("\"hint\""))
-        .stdout(contains("any-switch import-current codex"));
+        .stdout(contains("ha-switch import-current codex"));
 }
 
 #[test]
 fn status_rejects_unknown_app_filter() {
     let switch_home = tempdir().unwrap();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
-        .env("ANY_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
+        .env("HA_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
         .args(["status", "does-not-exist"])
         .assert()
         .failure()
         .stderr(contains("AppNotFound: does-not-exist"));
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
-        .env("ANY_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
+        .env("HA_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
         .args(["status", "does-not-exist", "--json"])
         .assert()
         .failure()
@@ -651,10 +651,10 @@ fn status_rejects_invalid_active_state_ids() {
     )
     .unwrap();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
-        .env("ANY_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
+        .env("HA_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
         .args(["status"])
         .assert()
         .failure()
@@ -673,9 +673,9 @@ fn status_reports_missing_when_static_target_file_is_absent() {
         .tempdir_in(&cwd)
         .unwrap();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("TEST_API_KEY", "sk-test")
         .args([
@@ -692,9 +692,9 @@ fn status_reports_missing_when_static_target_file_is_absent() {
         .assert()
         .success();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["use", "codex-missing-target", "--yes"])
@@ -703,9 +703,9 @@ fn status_reports_missing_when_static_target_file_is_absent() {
 
     fs::remove_file(codex_home.path().join("auth.json")).unwrap();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .args(["status", "codex"])
         .assert()
@@ -713,9 +713,9 @@ fn status_reports_missing_when_static_target_file_is_absent() {
         .stdout(contains("codex\tmissing\tcodex-missing-target"))
         .stdout(contains("reason\ttarget_missing"));
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .args(["status", "codex", "--json"])
         .assert()
@@ -735,10 +735,10 @@ sed 's/model: gpt-5-codex/model: edited-model/' "$1" > "$1.next" && mv "$1.next"
 "#,
     );
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
-        .env("ANY_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
+        .env("HA_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
         .env("TEST_API_KEY", "sk-test")
         .args([
             "add",
@@ -754,20 +754,20 @@ sed 's/model: gpt-5-codex/model: edited-model/' "$1" > "$1.next" && mv "$1.next"
         .assert()
         .success();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
-        .env("ANY_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
+        .env("HA_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
         .env("EDITOR", &editor)
         .args(["edit", "codex-editable"])
         .assert()
         .success()
         .stdout(contains("edited codex-editable"));
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
-        .env("ANY_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
+        .env("HA_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
         .args(["show", "codex-editable"])
         .assert()
         .success()
@@ -795,10 +795,10 @@ fn edit_falls_back_to_vim_when_editor_env_is_missing() {
     permissions.set_mode(0o700);
     fs::set_permissions(&vim, permissions).unwrap();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
-        .env("ANY_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
+        .env("HA_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
         .env("TEST_API_KEY", "sk-test")
         .args([
             "add",
@@ -814,10 +814,10 @@ fn edit_falls_back_to_vim_when_editor_env_is_missing() {
         .assert()
         .success();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
-        .env("ANY_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
+        .env("HA_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
         .env("PATH", editor_dir.path())
         .env_remove("VISUAL")
         .env_remove("EDITOR")
@@ -826,10 +826,10 @@ fn edit_falls_back_to_vim_when_editor_env_is_missing() {
         .success()
         .stdout(contains("edited codex-fallback-edit"));
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
-        .env("ANY_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
+        .env("HA_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
         .args(["show", "codex-fallback-edit"])
         .assert()
         .success()
@@ -847,10 +847,10 @@ sed 's/id: codex-immutable/id: codex-renamed/' "$1" > "$1.next" && mv "$1.next" 
 "#,
     );
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
-        .env("ANY_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
+        .env("HA_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
         .env("TEST_API_KEY", "sk-test")
         .args([
             "add",
@@ -866,20 +866,20 @@ sed 's/id: codex-immutable/id: codex-renamed/' "$1" > "$1.next" && mv "$1.next" 
         .assert()
         .success();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
-        .env("ANY_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
+        .env("HA_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
         .env("EDITOR", &editor)
         .args(["edit", "codex-immutable"])
         .assert()
         .failure()
         .stderr(contains("ImmutableFieldChanged"));
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
-        .env("ANY_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
+        .env("HA_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
         .args(["show", "codex-immutable"])
         .assert()
         .success()
@@ -891,10 +891,10 @@ fn edit_does_not_update_profile_or_open_editor_when_app_is_locked() {
     let switch_home = tempdir().unwrap();
     let test_home = switch_home.path().parent().unwrap().to_path_buf();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
-        .env("ANY_SWITCH_TEST_HOME", &test_home)
+        .env("HA_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_TEST_HOME", &test_home)
         .env("TEST_API_KEY", "sk-first")
         .args([
             "add",
@@ -910,13 +910,13 @@ fn edit_does_not_update_profile_or_open_editor_when_app_is_locked() {
         .assert()
         .success();
 
-    let paths = any_switch::paths::Paths {
+    let paths = ha_switch::paths::Paths {
         home: test_home,
         switch_home: switch_home.path().to_path_buf(),
     };
     paths.ensure_layout().unwrap();
     let _app_lock =
-        any_switch::lock::FileLock::acquire(any_switch::lock::app_lock(&paths, "codex").unwrap())
+        ha_switch::lock::FileLock::acquire(ha_switch::lock::app_lock(&paths, "codex").unwrap())
             .unwrap();
 
     let editor_marker = switch_home.path().join("editor-ran");
@@ -929,10 +929,10 @@ fn edit_does_not_update_profile_or_open_editor_when_app_is_locked() {
         ),
     );
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
-        .env("ANY_SWITCH_TEST_HOME", paths.home)
+        .env("HA_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_TEST_HOME", paths.home)
         .env("EDITOR", &editor)
         .args(["edit", "codex-locked-edit"])
         .assert()
@@ -966,9 +966,9 @@ fn codex_use_rejects_non_file_credential_store_before_backup() {
     )
     .unwrap();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("TEST_API_KEY", "sk-blocked")
         .args([
@@ -985,9 +985,9 @@ fn codex_use_rejects_non_file_credential_store_before_backup() {
         .assert()
         .success();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["use", "codex-keyring", "--yes"])
@@ -1017,9 +1017,9 @@ fn codex_restore_rejects_non_file_credential_store_before_pending() {
         .tempdir_in(&cwd)
         .unwrap();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("FIRST_API_KEY", "sk-first")
         .args([
@@ -1036,9 +1036,9 @@ fn codex_restore_rejects_non_file_credential_store_before_pending() {
         .assert()
         .success();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["use", "codex-first", "--yes"])
@@ -1054,9 +1054,9 @@ fn codex_restore_rejects_non_file_credential_store_before_pending() {
     )
     .unwrap();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["restore-target", "codex", &backup_id, "--yes"])
@@ -1091,9 +1091,9 @@ fn use_reports_missing_optional_capture_blob_recorded_in_manifest() {
     .unwrap();
     write_codex_oauth(codex_home.path(), "acct-a", "refresh-a");
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args([
@@ -1115,9 +1115,9 @@ fn use_reports_missing_optional_capture_blob_recorded_in_manifest() {
     )
     .unwrap();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["use", "codex-optional", "--yes"])
@@ -1141,9 +1141,9 @@ fn import_current_oauth_refreshes_existing_profile_by_required_identity() {
         .unwrap();
 
     write_codex_oauth(codex_home.path(), "acct-a", "refresh-a");
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args([
@@ -1158,9 +1158,9 @@ fn import_current_oauth_refreshes_existing_profile_by_required_identity() {
         .stdout(contains("imported codex-original"));
 
     write_codex_oauth(codex_home.path(), "acct-a", "refresh-a-rotated");
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args([
@@ -1217,9 +1217,9 @@ profiles: []
     .unwrap();
     write_codex_oauth(codex_home.path(), "acct-a", "refresh-a");
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args([
@@ -1246,18 +1246,18 @@ profiles: []
     )
     .unwrap();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["detach", "codex"])
         .assert()
         .success();
 
-    let dry_run_output = Command::cargo_bin("any-switch")
+    let dry_run_output = Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["use", "codex-stale", "--dry-run", "--json"])
@@ -1283,9 +1283,9 @@ profiles: []
     );
     assert_eq!(dry_run_plan["identity"]["account_id"], "acct-a");
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["use", "codex-stale", "--yes"])
@@ -1322,19 +1322,19 @@ profiles:
     )
     .unwrap();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
-        .env("ANY_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
+        .env("HA_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
         .args(["list"])
         .assert()
         .success()
         .stdout(contains("codex-future"));
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
-        .env("ANY_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
+        .env("HA_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
         .env("TEST_API_KEY", "sk-new")
         .args([
             "add",
@@ -1378,19 +1378,19 @@ profiles:
     )
     .unwrap();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
-        .env("ANY_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
+        .env("HA_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
         .args(["list"])
         .assert()
         .success()
         .stdout(contains("codex-existing"));
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
-        .env("ANY_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
+        .env("HA_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
         .env("TEST_API_KEY", "sk-new")
         .args([
             "add",
@@ -1434,9 +1434,9 @@ profiles: []
     .unwrap();
     write_codex_oauth(codex_home.path(), "acct-a", "refresh-a");
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args([
@@ -1464,9 +1464,9 @@ profiles: []
     .unwrap();
 
     write_codex_oauth(codex_home.path(), "acct-a", "refresh-a-new");
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args([
@@ -1485,9 +1485,9 @@ profiles: []
     assert_ne!(refreshed["captured_at"], "2020-01-01T00:00:00Z");
     assert!(refreshed["last_writeback_at"].is_null());
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["use", "codex-stale-refresh", "--dry-run", "--json"])
@@ -1509,9 +1509,9 @@ fn oauth_optional_identity_mismatch_warns_without_blocking() {
         .unwrap();
     write_codex_oauth(codex_home.path(), "acct-a", "refresh-a");
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args([
@@ -1524,11 +1524,11 @@ fn oauth_optional_identity_mismatch_warns_without_blocking() {
         .assert()
         .success();
 
-    let paths = any_switch::paths::Paths {
+    let paths = ha_switch::paths::Paths {
         home: cwd,
         switch_home: switch_home.path().to_path_buf(),
     };
-    let mut store = any_switch::profiles::ProfileStore::load(&paths).unwrap();
+    let mut store = ha_switch::profiles::ProfileStore::load(&paths).unwrap();
     let profile = store
         .profiles
         .iter_mut()
@@ -1540,18 +1540,18 @@ fn oauth_optional_identity_mismatch_warns_without_blocking() {
     );
     store.save(&paths).unwrap();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["detach", "codex"])
         .assert()
         .success();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["use", "codex-optional", "--yes"])
@@ -1579,9 +1579,9 @@ fn oauth_identity_verify_failure_rolls_back_immediately() {
         .unwrap();
     write_codex_oauth(codex_home.path(), "acct-a", "refresh-a");
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args([
@@ -1594,11 +1594,11 @@ fn oauth_identity_verify_failure_rolls_back_immediately() {
         .assert()
         .success();
 
-    let paths = any_switch::paths::Paths {
+    let paths = ha_switch::paths::Paths {
         home: cwd,
         switch_home: switch_home.path().to_path_buf(),
     };
-    let mut store = any_switch::profiles::ProfileStore::load(&paths).unwrap();
+    let mut store = ha_switch::profiles::ProfileStore::load(&paths).unwrap();
     let profile = store
         .profiles
         .iter_mut()
@@ -1611,18 +1611,18 @@ fn oauth_identity_verify_failure_rolls_back_immediately() {
     store.save(&paths).unwrap();
 
     write_codex_oauth(codex_home.path(), "acct-live", "refresh-live");
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["detach", "codex"])
         .assert()
         .success();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["use", "codex-broken", "--yes"])
@@ -1669,19 +1669,19 @@ fn import_current_respects_target_locks() {
     )
     .unwrap();
 
-    let paths = any_switch::paths::Paths {
+    let paths = ha_switch::paths::Paths {
         home: cwd.clone(),
         switch_home: switch_home.path().to_path_buf(),
     };
     paths.ensure_layout().unwrap();
     let target_id = format!("file:{}", codex_home.path().join("auth.json").display());
     let _target_lock =
-        any_switch::lock::FileLock::acquire(any_switch::lock::target_lock(&paths, &target_id))
+        ha_switch::lock::FileLock::acquire(ha_switch::lock::target_lock(&paths, &target_id))
             .unwrap();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .env("ANY_SWITCH_LOCK_WAIT_MS", "1")
@@ -1741,9 +1741,9 @@ kinds:
         .unwrap();
     }
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("ALPHA_TOKEN", "alpha-token")
         .args([
             "add",
@@ -1756,9 +1756,9 @@ kinds:
         ])
         .assert()
         .success();
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("BETA_TOKEN", "beta-token")
         .args([
             "add",
@@ -1771,26 +1771,26 @@ kinds:
         ])
         .assert()
         .success();
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["use", "alpha-one", "--yes"])
         .assert()
         .success();
 
-    let paths = any_switch::paths::Paths {
+    let paths = ha_switch::paths::Paths {
         home: cwd.clone(),
         switch_home: switch_home.path().to_path_buf(),
     };
     paths.ensure_layout().unwrap();
     let target_id = format!("file:{}", shared_target.display());
     let target_lock =
-        any_switch::lock::FileLock::acquire(any_switch::lock::target_lock(&paths, &target_id))
+        ha_switch::lock::FileLock::acquire(ha_switch::lock::target_lock(&paths, &target_id))
             .unwrap();
-    let binary = assert_cmd::cargo::cargo_bin("any-switch");
+    let binary = assert_cmd::cargo::cargo_bin("ha-switch");
     let mut beta_child = std::process::Command::new(&binary)
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .stdout(std::process::Stdio::null())
         .stderr(std::process::Stdio::null())
@@ -1862,9 +1862,9 @@ kinds:
     )
     .unwrap();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("TEST_API_KEY", "sk-state-lock")
         .args([
@@ -1878,9 +1878,9 @@ kinds:
         ])
         .assert()
         .success();
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .args([
             "add",
             "toy",
@@ -1892,32 +1892,32 @@ kinds:
         ])
         .assert()
         .success();
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["use", "codex-state", "--yes"])
         .assert()
         .success();
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["use", "toy-state", "--yes"])
         .assert()
         .success();
 
-    let paths = any_switch::paths::Paths {
+    let paths = ha_switch::paths::Paths {
         home: cwd.clone(),
         switch_home: switch_home.path().to_path_buf(),
     };
     paths.ensure_layout().unwrap();
     let state_lock =
-        any_switch::lock::FileLock::acquire(any_switch::lock::state_lock(&paths)).unwrap();
-    let binary = assert_cmd::cargo::cargo_bin("any-switch");
+        ha_switch::lock::FileLock::acquire(ha_switch::lock::state_lock(&paths)).unwrap();
+    let binary = assert_cmd::cargo::cargo_bin("ha-switch");
     let mut codex_child = std::process::Command::new(&binary)
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .stdout(std::process::Stdio::null())
         .stderr(std::process::Stdio::null())
         .arg("detach")
@@ -1925,7 +1925,7 @@ kinds:
         .spawn()
         .unwrap();
     let mut toy_child = std::process::Command::new(&binary)
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .stdout(std::process::Stdio::null())
         .stderr(std::process::Stdio::null())
         .arg("detach")
@@ -1976,9 +1976,9 @@ fn remove_deletes_profile_capture_and_clears_active_without_touching_live_target
         .unwrap();
     write_codex_oauth(codex_home.path(), "acct-a", "refresh-a");
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args([
@@ -1990,9 +1990,9 @@ fn remove_deletes_profile_capture_and_clears_active_without_touching_live_target
         ])
         .assert()
         .success();
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["use", "codex-remove-me", "--yes"])
@@ -2000,9 +2000,9 @@ fn remove_deletes_profile_capture_and_clears_active_without_touching_live_target
         .success();
 
     let live_before = fs::read_to_string(codex_home.path().join("auth.json")).unwrap();
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .args(["remove", "codex-remove-me", "--yes"])
         .assert()
         .success()
@@ -2058,10 +2058,10 @@ profiles:
     )
     .unwrap();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
-        .env("ANY_SWITCH_TEST_HOME", &cwd)
+        .env("HA_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_TEST_HOME", &cwd)
         .args(["remove", "../escape", "--yes"])
         .assert()
         .failure()
@@ -2073,10 +2073,10 @@ profiles:
 #[test]
 fn remove_rejects_force_as_confirmation_alias() {
     let switch_home = tempdir().unwrap();
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
-        .env("ANY_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
+        .env("HA_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
         .env("TEST_API_KEY", "sk-test")
         .args([
             "add",
@@ -2092,10 +2092,10 @@ fn remove_rejects_force_as_confirmation_alias() {
         .assert()
         .success();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
-        .env("ANY_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
+        .env("HA_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
         .args(["remove", "codex-force-remove", "--force"])
         .assert()
         .failure()
@@ -2118,9 +2118,9 @@ fn detach_clears_active_without_touching_profile_capture_backup_or_live_target()
         .unwrap();
     write_codex_oauth(codex_home.path(), "acct-a", "refresh-a");
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args([
@@ -2132,9 +2132,9 @@ fn detach_clears_active_without_touching_profile_capture_backup_or_live_target()
         ])
         .assert()
         .success();
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("TEST_API_KEY", "sk-detach")
         .args([
@@ -2150,9 +2150,9 @@ fn detach_clears_active_without_touching_profile_capture_backup_or_live_target()
         ])
         .assert()
         .success();
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args([
@@ -2175,15 +2175,15 @@ fn detach_clears_active_without_touching_profile_capture_backup_or_live_target()
     assert!(!backup_ids_before.is_empty());
     let live_before = fs::read_to_string(codex_home.path().join("auth.json")).unwrap();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .args(["detach", "codex"])
         .assert()
         .success()
         .stdout(contains("codex is now detached"))
         .stdout(contains("import-current"))
-        .stdout(contains("not `any-switch use"));
+        .stdout(contains("not `ha-switch use"));
 
     assert_eq!(
         fs::read_to_string(switch_home.path().join("profiles.yaml")).unwrap(),
@@ -2225,10 +2225,10 @@ fn detach_rejects_invalid_app_id_before_creating_lock_path() {
         .tempdir_in(&cwd)
         .unwrap();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
-        .env("ANY_SWITCH_TEST_HOME", &cwd)
+        .env("HA_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_TEST_HOME", &cwd)
         .args(["detach", "../escape"])
         .assert()
         .failure()
@@ -2241,10 +2241,10 @@ fn detach_rejects_invalid_app_id_before_creating_lock_path() {
 fn detach_rejects_unknown_app_without_writing_active_state() {
     let switch_home = tempdir().unwrap();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
-        .env("ANY_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
+        .env("HA_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_TEST_HOME", switch_home.path().parent().unwrap())
         .args(["detach", "doesnotexist"])
         .assert()
         .failure()
@@ -2275,9 +2275,9 @@ fn remove_does_not_delete_profile_or_capture_when_app_is_locked() {
         .unwrap();
     write_codex_oauth(codex_home.path(), "acct-a", "refresh-a");
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args([
@@ -2290,18 +2290,18 @@ fn remove_does_not_delete_profile_or_capture_when_app_is_locked() {
         .assert()
         .success();
 
-    let paths = any_switch::paths::Paths {
+    let paths = ha_switch::paths::Paths {
         home: cwd,
         switch_home: switch_home.path().to_path_buf(),
     };
     paths.ensure_layout().unwrap();
     let _app_lock =
-        any_switch::lock::FileLock::acquire(any_switch::lock::app_lock(&paths, "codex").unwrap())
+        ha_switch::lock::FileLock::acquire(ha_switch::lock::app_lock(&paths, "codex").unwrap())
             .unwrap();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .args(["remove", "codex-locked-remove", "--yes"])
         .assert()
         .failure()
@@ -2350,9 +2350,9 @@ fn import_current_marks_profile_active_with_resolved_targets() {
     )
     .unwrap();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args([
@@ -2366,9 +2366,9 @@ fn import_current_marks_profile_active_with_resolved_targets() {
         .success()
         .stdout(contains("imported codex-active"));
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .args(["status", "codex"])
         .assert()
@@ -2388,7 +2388,7 @@ fn restore_claude_oauth_backup_restores_json_subtrees_not_whole_file() {
         .prefix(".test-home-")
         .tempdir_in(&cwd)
         .unwrap();
-    let switch_home = home.path().join(".any-switch");
+    let switch_home = home.path().join(".ha-switch");
     let claude_dir = home.path().join(".claude");
     fs::create_dir_all(&claude_dir).unwrap();
     fs::write(
@@ -2398,11 +2398,11 @@ fn restore_claude_oauth_backup_restores_json_subtrees_not_whole_file() {
     .unwrap();
     write_claude_json(home.path(), "acct-a", "org-a", "user-a", "original");
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
         .env("HOME", home.path())
-        .env("ANY_SWITCH_TEST_HOME", home.path())
-        .env("ANY_SWITCH_HOME", &switch_home)
+        .env("HA_SWITCH_TEST_HOME", home.path())
+        .env("HA_SWITCH_HOME", &switch_home)
         .env("ANY_SWITCH_TEST_PLATFORM", "linux")
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args([
@@ -2415,21 +2415,21 @@ fn restore_claude_oauth_backup_restores_json_subtrees_not_whole_file() {
         .assert()
         .success();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
         .env("HOME", home.path())
-        .env("ANY_SWITCH_TEST_HOME", home.path())
-        .env("ANY_SWITCH_HOME", &switch_home)
+        .env("HA_SWITCH_TEST_HOME", home.path())
+        .env("HA_SWITCH_HOME", &switch_home)
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["detach", "claude"])
         .assert()
         .success();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
         .env("HOME", home.path())
-        .env("ANY_SWITCH_TEST_HOME", home.path())
-        .env("ANY_SWITCH_HOME", &switch_home)
+        .env("HA_SWITCH_TEST_HOME", home.path())
+        .env("HA_SWITCH_HOME", &switch_home)
         .env("ANY_SWITCH_TEST_PLATFORM", "linux")
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["use", "claude-work", "--yes"])
@@ -2455,11 +2455,11 @@ fn restore_claude_oauth_backup_restores_json_subtrees_not_whole_file() {
         br#"{"before":"keep","oauthAccount":{"accountUuid":"acct-b","organizationUuid":"org-b","organizationName":"Changed","emailAddress":"changed@example.test"},"between":{"nested":true},"userID":"user-b","after":"keep"}"#,
     )
     .unwrap();
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
         .env("HOME", home.path())
-        .env("ANY_SWITCH_TEST_HOME", home.path())
-        .env("ANY_SWITCH_HOME", &switch_home)
+        .env("HA_SWITCH_TEST_HOME", home.path())
+        .env("HA_SWITCH_HOME", &switch_home)
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["restore-target", "claude", &backup_id, "--yes"])
         .assert()
@@ -2486,7 +2486,7 @@ fn claude_oauth_use_clears_managed_settings_env_keys() {
         .prefix(".test-home-")
         .tempdir_in(&cwd)
         .unwrap();
-    let switch_home = home.path().join(".any-switch");
+    let switch_home = home.path().join(".ha-switch");
     let claude_dir = home.path().join(".claude");
     fs::create_dir_all(&claude_dir).unwrap();
     write_claude_credentials(home.path(), "acct-a", "org-a", "refresh-a");
@@ -2505,11 +2505,11 @@ fn claude_oauth_use_clears_managed_settings_env_keys() {
     )
     .unwrap();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
         .env("HOME", home.path())
-        .env("ANY_SWITCH_TEST_HOME", home.path())
-        .env("ANY_SWITCH_HOME", &switch_home)
+        .env("HA_SWITCH_TEST_HOME", home.path())
+        .env("HA_SWITCH_HOME", &switch_home)
         .env("ANY_SWITCH_TEST_PLATFORM", "linux")
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args([
@@ -2522,21 +2522,21 @@ fn claude_oauth_use_clears_managed_settings_env_keys() {
         .assert()
         .success();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
         .env("HOME", home.path())
-        .env("ANY_SWITCH_TEST_HOME", home.path())
-        .env("ANY_SWITCH_HOME", &switch_home)
+        .env("HA_SWITCH_TEST_HOME", home.path())
+        .env("HA_SWITCH_HOME", &switch_home)
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["detach", "claude"])
         .assert()
         .success();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
         .env("HOME", home.path())
-        .env("ANY_SWITCH_TEST_HOME", home.path())
-        .env("ANY_SWITCH_HOME", &switch_home)
+        .env("HA_SWITCH_TEST_HOME", home.path())
+        .env("HA_SWITCH_HOME", &switch_home)
         .env("ANY_SWITCH_TEST_PLATFORM", "linux")
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["use", "claude-work", "--yes"])
@@ -2563,11 +2563,11 @@ fn claude_oauth_use_clears_managed_settings_env_keys() {
     .unwrap();
     assert!(manifest.contains("settings.json"));
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
         .env("HOME", home.path())
-        .env("ANY_SWITCH_TEST_HOME", home.path())
-        .env("ANY_SWITCH_HOME", &switch_home)
+        .env("HA_SWITCH_TEST_HOME", home.path())
+        .env("HA_SWITCH_HOME", &switch_home)
         .env("ANY_SWITCH_TEST_PLATFORM", "linux")
         .args(["status", "claude"])
         .assert()
@@ -2582,7 +2582,7 @@ fn restore_target_rolls_back_and_clears_pending_when_apply_fails() {
         .prefix(".test-home-")
         .tempdir_in(&cwd)
         .unwrap();
-    let switch_home = home.path().join(".any-switch");
+    let switch_home = home.path().join(".ha-switch");
     write_claude_json(
         home.path(),
         "acct-live",
@@ -2612,7 +2612,7 @@ fn restore_target_rolls_back_and_clears_pending_when_apply_fails() {
                     "resolved_path": target.display().to_string(),
                     "json_path": "$.oauthAccount",
                     "stored_as": "target-0.bak",
-                    "sha256": any_switch::backup::sha256_hex(blob)
+                    "sha256": ha_switch::backup::sha256_hex(blob)
                 }
             ]
         }))
@@ -2620,11 +2620,11 @@ fn restore_target_rolls_back_and_clears_pending_when_apply_fails() {
     )
     .unwrap();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
         .env("HOME", home.path())
-        .env("ANY_SWITCH_TEST_HOME", home.path())
-        .env("ANY_SWITCH_HOME", &switch_home)
+        .env("HA_SWITCH_TEST_HOME", home.path())
+        .env("HA_SWITCH_HOME", &switch_home)
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["restore-target", "claude", backup_id, "--yes"])
         .assert()
@@ -2652,15 +2652,15 @@ fn claude_import_uses_oauth_account_identity_when_credentials_are_opaque() {
         .prefix(".test-home-")
         .tempdir_in(&cwd)
         .unwrap();
-    let switch_home = home.path().join(".any-switch");
+    let switch_home = home.path().join(".ha-switch");
     write_claude_credentials(home.path(), "acct-b", "org-b", "refresh-b");
     write_claude_json(home.path(), "acct-a", "org-a", "user-a", "original");
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
         .env("HOME", home.path())
-        .env("ANY_SWITCH_TEST_HOME", home.path())
-        .env("ANY_SWITCH_HOME", &switch_home)
+        .env("HA_SWITCH_TEST_HOME", home.path())
+        .env("HA_SWITCH_HOME", &switch_home)
         .env("ANY_SWITCH_TEST_PLATFORM", "linux")
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args([
@@ -2674,11 +2674,11 @@ fn claude_import_uses_oauth_account_identity_when_credentials_are_opaque() {
         .success()
         .stdout(contains("imported claude-opaque"));
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
         .env("HOME", home.path())
-        .env("ANY_SWITCH_TEST_HOME", home.path())
-        .env("ANY_SWITCH_HOME", &switch_home)
+        .env("HA_SWITCH_TEST_HOME", home.path())
+        .env("HA_SWITCH_HOME", &switch_home)
         .args(["show", "claude-opaque"])
         .assert()
         .success()
@@ -2694,12 +2694,12 @@ fn claude_import_can_capture_macos_keychain_fixture() {
         .prefix(".test-home-")
         .tempdir_in(&cwd)
         .unwrap();
-    let switch_home = home.path().join(".any-switch");
+    let switch_home = home.path().join(".ha-switch");
     let keychain_fixture = home.path().join(".keychain-fixture");
     fs::create_dir_all(&keychain_fixture).unwrap();
     let account = current_test_os_user();
     let fixture_name =
-        any_switch::backup::sha256_hex(format!("Claude Code-credentials\0{account}").as_bytes());
+        ha_switch::backup::sha256_hex(format!("Claude Code-credentials\0{account}").as_bytes());
     fs::write(
         keychain_fixture.join(format!("{fixture_name}.secret")),
         serde_json::to_vec_pretty(&serde_json::json!({
@@ -2714,11 +2714,11 @@ fn claude_import_can_capture_macos_keychain_fixture() {
     .unwrap();
     write_claude_json(home.path(), "acct-a", "org-a", "user-a", "original");
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
         .env("HOME", home.path())
-        .env("ANY_SWITCH_TEST_HOME", home.path())
-        .env("ANY_SWITCH_HOME", &switch_home)
+        .env("HA_SWITCH_TEST_HOME", home.path())
+        .env("HA_SWITCH_HOME", &switch_home)
         .env("ANY_SWITCH_KEYCHAIN_FIXTURE_DIR", &keychain_fixture)
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args([
@@ -2746,16 +2746,16 @@ fn claude_import_uses_claude_config_dir_for_file_backed_credentials() {
         .prefix(".test-home-")
         .tempdir_in(&cwd)
         .unwrap();
-    let switch_home = home.path().join(".any-switch");
+    let switch_home = home.path().join(".ha-switch");
     let config_dir = home.path().join("custom-claude-config");
     write_claude_credentials_file(&config_dir, "acct-a", "org-a", "refresh-config-dir");
     write_claude_json(home.path(), "acct-a", "org-a", "user-a", "original");
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
         .env("HOME", home.path())
-        .env("ANY_SWITCH_TEST_HOME", home.path())
-        .env("ANY_SWITCH_HOME", &switch_home)
+        .env("HA_SWITCH_TEST_HOME", home.path())
+        .env("HA_SWITCH_HOME", &switch_home)
         .env("ANY_SWITCH_TEST_PLATFORM", "linux")
         .env("CLAUDE_CONFIG_DIR", &config_dir)
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
@@ -2788,15 +2788,15 @@ fn claude_status_and_writeback_detect_oauth_account_identity_mismatch() {
         .prefix(".test-home-")
         .tempdir_in(&cwd)
         .unwrap();
-    let switch_home = home.path().join(".any-switch");
+    let switch_home = home.path().join(".ha-switch");
     write_claude_credentials(home.path(), "acct-a", "org-a", "refresh-a");
     write_claude_json(home.path(), "acct-a", "org-a", "user-a", "original");
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
         .env("HOME", home.path())
-        .env("ANY_SWITCH_TEST_HOME", home.path())
-        .env("ANY_SWITCH_HOME", &switch_home)
+        .env("HA_SWITCH_TEST_HOME", home.path())
+        .env("HA_SWITCH_HOME", &switch_home)
         .env("ANY_SWITCH_TEST_PLATFORM", "linux")
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args([
@@ -2809,11 +2809,11 @@ fn claude_status_and_writeback_detect_oauth_account_identity_mismatch() {
         .assert()
         .success();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
         .env("HOME", home.path())
-        .env("ANY_SWITCH_TEST_HOME", home.path())
-        .env("ANY_SWITCH_HOME", &switch_home)
+        .env("HA_SWITCH_TEST_HOME", home.path())
+        .env("HA_SWITCH_HOME", &switch_home)
         .env("ANY_SWITCH_TEST_PLATFORM", "linux")
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["use", "claude-work", "--yes"])
@@ -2821,22 +2821,22 @@ fn claude_status_and_writeback_detect_oauth_account_identity_mismatch() {
         .success();
 
     write_claude_json(home.path(), "acct-b", "org-b", "user-b", "changed");
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
         .env("HOME", home.path())
-        .env("ANY_SWITCH_TEST_HOME", home.path())
-        .env("ANY_SWITCH_HOME", &switch_home)
+        .env("HA_SWITCH_TEST_HOME", home.path())
+        .env("HA_SWITCH_HOME", &switch_home)
         .env("ANY_SWITCH_TEST_PLATFORM", "linux")
         .args(["status", "claude"])
         .assert()
         .success()
         .stdout(contains("claude\tdrifted\tclaude-work"));
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
         .env("HOME", home.path())
-        .env("ANY_SWITCH_TEST_HOME", home.path())
-        .env("ANY_SWITCH_HOME", &switch_home)
+        .env("HA_SWITCH_TEST_HOME", home.path())
+        .env("HA_SWITCH_HOME", &switch_home)
         .env("ANY_SWITCH_TEST_PLATFORM", "linux")
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["doctor", "claude"])
@@ -2846,11 +2846,11 @@ fn claude_status_and_writeback_detect_oauth_account_identity_mismatch() {
         .stdout(contains("restored identity does not match"))
         .stdout(is_match("refresh-a").unwrap().not());
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
         .env("HOME", home.path())
-        .env("ANY_SWITCH_TEST_HOME", home.path())
-        .env("ANY_SWITCH_HOME", &switch_home)
+        .env("HA_SWITCH_TEST_HOME", home.path())
+        .env("HA_SWITCH_HOME", &switch_home)
         .env("ANY_SWITCH_TEST_PLATFORM", "linux")
         .env("PROXY_TOKEN", "proxy-secret")
         .args([
@@ -2867,11 +2867,11 @@ fn claude_status_and_writeback_detect_oauth_account_identity_mismatch() {
         .assert()
         .success();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
         .env("HOME", home.path())
-        .env("ANY_SWITCH_TEST_HOME", home.path())
-        .env("ANY_SWITCH_HOME", &switch_home)
+        .env("HA_SWITCH_TEST_HOME", home.path())
+        .env("HA_SWITCH_HOME", &switch_home)
         .env("ANY_SWITCH_TEST_PLATFORM", "linux")
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["use", "claude-proxy", "--yes", "--accept-resolved-change"])
@@ -2892,9 +2892,9 @@ fn restore_rejects_backup_with_hash_mismatch() {
         .tempdir_in(&cwd)
         .unwrap();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("TEST_API_KEY", "sk-test")
         .args([
@@ -2911,9 +2911,9 @@ fn restore_rejects_backup_with_hash_mismatch() {
         .assert()
         .success();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["use", "codex-hash", "--yes"])
@@ -2934,9 +2934,9 @@ fn restore_rejects_backup_with_hash_mismatch() {
     )
     .unwrap();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["restore-target", "codex", &backup_id, "--yes"])
@@ -2962,9 +2962,9 @@ fn use_oauth_rejects_missing_capture_before_pending_or_backup() {
         .unwrap();
     write_codex_oauth(codex_home.path(), "acct-a", "refresh-a");
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args([
@@ -2986,9 +2986,9 @@ fn use_oauth_rejects_missing_capture_before_pending_or_backup() {
     )
     .unwrap();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["use", "codex-broken", "--yes"])
@@ -3018,9 +3018,9 @@ fn pending_switch_blocks_writes_and_status_reports_interrupted() {
         .tempdir_in(&cwd)
         .unwrap();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("TEST_API_KEY", "sk-test")
         .args([
@@ -3055,18 +3055,18 @@ fn pending_switch_blocks_writes_and_status_reports_interrupted() {
     )
     .unwrap();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .args(["status", "codex"])
         .assert()
         .success()
         .stdout(contains("codex\tinterrupted"));
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .args(["use", "codex-blocked", "--yes"])
         .assert()
@@ -3086,9 +3086,9 @@ fn add_force_refuses_to_replace_profile_when_app_has_pending_switch() {
         .tempdir_in(&cwd)
         .unwrap();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("FIRST_API_KEY", "sk-first")
         .args([
@@ -3123,9 +3123,9 @@ fn add_force_refuses_to_replace_profile_when_app_has_pending_switch() {
     )
     .unwrap();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("SECOND_API_KEY", "sk-second")
         .args([
@@ -3163,9 +3163,9 @@ fn add_force_does_not_replace_profile_when_app_is_locked() {
         .tempdir_in(&cwd)
         .unwrap();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("FIRST_API_KEY", "sk-first")
         .args([
@@ -3182,18 +3182,18 @@ fn add_force_does_not_replace_profile_when_app_is_locked() {
         .assert()
         .success();
 
-    let paths = any_switch::paths::Paths {
+    let paths = ha_switch::paths::Paths {
         home: cwd,
         switch_home: switch_home.path().to_path_buf(),
     };
     paths.ensure_layout().unwrap();
     let _app_lock =
-        any_switch::lock::FileLock::acquire(any_switch::lock::app_lock(&paths, "codex").unwrap())
+        ha_switch::lock::FileLock::acquire(ha_switch::lock::app_lock(&paths, "codex").unwrap())
             .unwrap();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("SECOND_API_KEY", "sk-second")
         .args([
@@ -3231,9 +3231,9 @@ fn pending_applying_with_backup_rolls_back_before_next_write() {
         .tempdir_in(&cwd)
         .unwrap();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("FIRST_API_KEY", "sk-first")
         .args([
@@ -3250,9 +3250,9 @@ fn pending_applying_with_backup_rolls_back_before_next_write() {
         .assert()
         .success();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("SECOND_API_KEY", "sk-second")
         .args([
@@ -3269,9 +3269,9 @@ fn pending_applying_with_backup_rolls_back_before_next_write() {
         .assert()
         .success();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["use", "codex-first", "--yes"])
@@ -3306,9 +3306,9 @@ fn pending_applying_with_backup_rolls_back_before_next_write() {
     )
     .unwrap();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["use", "codex-second", "--yes"])
@@ -3338,9 +3338,9 @@ fn pending_use_applying_commits_when_live_matches_target_profile() {
         .tempdir_in(&cwd)
         .unwrap();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("FIRST_API_KEY", "sk-first")
         .args([
@@ -3357,9 +3357,9 @@ fn pending_use_applying_commits_when_live_matches_target_profile() {
         .assert()
         .success();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("SECOND_API_KEY", "sk-second")
         .args([
@@ -3376,22 +3376,22 @@ fn pending_use_applying_commits_when_live_matches_target_profile() {
         .assert()
         .success();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["use", "codex-first", "--yes"])
         .assert()
         .success();
 
-    let paths = any_switch::paths::Paths {
+    let paths = ha_switch::paths::Paths {
         home: cwd,
         switch_home: switch_home.path().to_path_buf(),
     };
     let auth_path = codex_home.path().join("auth.json");
     let config_path = codex_home.path().join("config.toml");
-    let rollback_id = any_switch::backup::create_backup(
+    let rollback_id = ha_switch::backup::create_backup(
         &paths,
         "codex",
         &[auth_path.clone(), config_path.clone()],
@@ -3437,9 +3437,9 @@ fn pending_use_applying_commits_when_live_matches_target_profile() {
     )
     .unwrap();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["use", "codex-second", "--yes"])
@@ -3473,9 +3473,9 @@ fn process_probe_blocks_static_write_unless_allow_running() {
         .tempdir_in(&cwd)
         .unwrap();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("TEST_API_KEY", "sk-test")
         .args([
@@ -3492,9 +3492,9 @@ fn process_probe_blocks_static_write_unless_allow_running() {
         .assert()
         .success();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .args(["use", "codex-running", "--yes", "--assume-app-stopped"])
         .assert()
@@ -3503,9 +3503,9 @@ fn process_probe_blocks_static_write_unless_allow_running() {
         .stderr(contains("--assume-app-stopped only applies to OAuth"))
         .stderr(contains("retry with `--allow-running`"));
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env(
             "ANY_SWITCH_PROCESS_PROBE_FIXTURE",
@@ -3518,9 +3518,9 @@ fn process_probe_blocks_static_write_unless_allow_running() {
         .stderr(contains("pid=4242"))
         .stderr(contains("start_time=Sun May 24 20:00:00 2026"));
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env(
             "ANY_SWITCH_PROCESS_PROBE_FIXTURE",
@@ -3533,9 +3533,9 @@ fn process_probe_blocks_static_write_unless_allow_running() {
         .stderr(contains("--assume-app-stopped only applies to OAuth"))
         .stderr(contains("retry with `--allow-running`"));
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env(
             "ANY_SWITCH_PROCESS_PROBE_FIXTURE",
@@ -3559,9 +3559,9 @@ fn oauth_assume_app_stopped_requires_confirmation_and_can_escape_probe() {
         .unwrap();
     write_codex_oauth(codex_home.path(), "acct-a", "refresh-a");
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_PROCESS_PROBE_FIXTURE", "")
         .args([
@@ -3578,9 +3578,9 @@ fn oauth_assume_app_stopped_requires_confirmation_and_can_escape_probe() {
             "import-current --yes is only valid with --assume-app-stopped",
         ));
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env(
             "ANY_SWITCH_PROCESS_PROBE_FIXTURE",
@@ -3600,9 +3600,9 @@ fn oauth_assume_app_stopped_requires_confirmation_and_can_escape_probe() {
         .stderr(contains("In a terminal, rerun and type `yes`"))
         .stderr(contains("rerun with `--yes`"));
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_PROCESS_PROBE_FIXTURE", "")
         .args([
@@ -3620,9 +3620,9 @@ fn oauth_assume_app_stopped_requires_confirmation_and_can_escape_probe() {
         .stderr(contains("no running app process was detected"))
         .stderr(contains("Retry without `--assume-app-stopped`"));
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env(
             "ANY_SWITCH_PROCESS_PROBE_FIXTURE",
@@ -3661,9 +3661,9 @@ fn pending_bookkeeping_is_recovered_before_next_write() {
         .tempdir_in(&cwd)
         .unwrap();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("TEST_API_KEY", "sk-test")
         .args([
@@ -3701,9 +3701,9 @@ fn pending_bookkeeping_is_recovered_before_next_write() {
     )
     .unwrap();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args([
@@ -3734,9 +3734,9 @@ fn restore_target_bookkeeping_recovery_does_not_update_active() {
         .tempdir_in(&cwd)
         .unwrap();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("FIRST_API_KEY", "sk-first")
         .args([
@@ -3753,9 +3753,9 @@ fn restore_target_bookkeeping_recovery_does_not_update_active() {
         .assert()
         .success();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("SECOND_API_KEY", "sk-second")
         .args([
@@ -3772,9 +3772,9 @@ fn restore_target_bookkeeping_recovery_does_not_update_active() {
         .assert()
         .success();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["use", "codex-active", "--yes"])
@@ -3803,9 +3803,9 @@ fn restore_target_bookkeeping_recovery_does_not_update_active() {
     )
     .unwrap();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["use", "codex-next", "--yes"])
@@ -3835,9 +3835,9 @@ fn restore_target_applying_recovery_commits_when_live_matches_restore_backup() {
         .tempdir_in(&cwd)
         .unwrap();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("FIRST_API_KEY", "sk-first")
         .args([
@@ -3854,9 +3854,9 @@ fn restore_target_applying_recovery_commits_when_live_matches_restore_backup() {
         .assert()
         .success();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("SECOND_API_KEY", "sk-second")
         .args([
@@ -3873,17 +3873,17 @@ fn restore_target_applying_recovery_commits_when_live_matches_restore_backup() {
         .assert()
         .success();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["use", "codex-first", "--yes"])
         .assert()
         .success();
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["use", "codex-second", "--yes"])
@@ -3893,11 +3893,11 @@ fn restore_target_applying_recovery_commits_when_live_matches_restore_backup() {
     let backup_id = list_backup_ids(switch_home.path(), "codex")
         .pop()
         .expect("backup id");
-    let paths = any_switch::paths::Paths {
+    let paths = ha_switch::paths::Paths {
         home: cwd,
         switch_home: switch_home.path().to_path_buf(),
     };
-    any_switch::backup::restore_backup(&paths, "codex", &backup_id).unwrap();
+    ha_switch::backup::restore_backup(&paths, "codex", &backup_id).unwrap();
     let auth_path = codex_home.path().join("auth.json");
     assert!(fs::read_to_string(&auth_path).unwrap().contains("sk-first"));
 
@@ -3923,9 +3923,9 @@ fn restore_target_applying_recovery_commits_when_live_matches_restore_backup() {
     )
     .unwrap();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["use", "codex-second", "--yes"])
@@ -3956,9 +3956,9 @@ fn resolved_target_change_reports_drift_and_requires_acceptance() {
         .tempdir_in(&cwd)
         .unwrap();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home_a.path())
         .env("TEST_API_KEY", "sk-test")
         .args([
@@ -3975,18 +3975,18 @@ fn resolved_target_change_reports_drift_and_requires_acceptance() {
         .assert()
         .success();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home_a.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["use", "codex-moving", "--yes"])
         .assert()
         .success();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home_b.path())
         .args(["status", "codex"])
         .assert()
@@ -4002,9 +4002,9 @@ fn resolved_target_change_reports_drift_and_requires_acceptance() {
             codex_home_b.path().join("auth.json").display().to_string(),
         ));
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home_b.path())
         .args(["status", "codex", "--json"])
         .assert()
@@ -4012,9 +4012,9 @@ fn resolved_target_change_reports_drift_and_requires_acceptance() {
         .stdout(contains("\"status\": \"drifted\""))
         .stdout(contains("resolved_targets_changed"));
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home_b.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["use", "codex-moving", "--yes"])
@@ -4022,9 +4022,9 @@ fn resolved_target_change_reports_drift_and_requires_acceptance() {
         .failure()
         .stderr(contains("ResolvedTargetChanged"));
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home_b.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["use", "codex-moving", "--yes", "--accept-resolved-change"])

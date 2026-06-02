@@ -71,29 +71,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "any-switch"
-version = "0.1.2"
-dependencies = [
- "anyhow",
- "assert_cmd",
- "chrono",
- "clap",
- "home",
- "indexmap",
- "libc",
- "predicates",
- "serde",
- "serde_json",
- "serde_yaml",
- "sha2",
- "tempfile",
- "thiserror",
- "toml_edit",
- "uuid",
- "windows-sys",
-]
-
-[[package]]
 name = "anyhow"
 version = "1.0.102"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -355,6 +332,29 @@ dependencies = [
  "r-efi",
  "wasip2",
  "wasip3",
+]
+
+[[package]]
+name = "ha-switch"
+version = "0.1.2"
+dependencies = [
+ "anyhow",
+ "assert_cmd",
+ "chrono",
+ "clap",
+ "home",
+ "indexmap",
+ "libc",
+ "predicates",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "sha2",
+ "tempfile",
+ "thiserror",
+ "toml_edit",
+ "uuid",
+ "windows-sys",
 ]
 
 [[package]]

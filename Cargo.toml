@@ -1,22 +1,22 @@
 [package]
-name = "any-switch"
+name = "ha-switch"
 version = "0.1.2"
 edition = "2021"
 rust-version = "1.95"
 license = "MIT"
 description = "Local app profile/state switcher."
 readme = "README.md"
-repository = "https://github.com/riverscn/any-switch"
-homepage = "https://github.com/riverscn/any-switch"
-documentation = "https://github.com/riverscn/any-switch/tree/main/docs"
+repository = "https://github.com/Harrison3-1122/ha-switch"
+homepage = "https://github.com/Harrison3-1122/ha-switch"
+documentation = "https://github.com/Harrison3-1122/ha-switch/tree/main/docs"
 keywords = ["cli", "profiles", "credentials", "switcher"]
 categories = ["command-line-utilities", "config"]
 exclude = [
     ".claude/**",
     ".codex/**",
-    ".any-switch/**",
-    ".any-switch-*",
-    ".any-switch-*/**",
+    ".ha-switch/**",
+    ".ha-switch-*",
+    ".ha-switch-*/**",
     ".DS_Store",
     "**/.DS_Store",
     ".smoke-*",
@@ -29,7 +29,7 @@ exclude = [
 ]
 
 [lib]
-name = "any_switch"
+name = "ha_switch"
 path = "src/lib.rs"
 
 [dependencies]

@@ -96,7 +96,7 @@ impl ProfileStore {
     pub fn ensure_writable_schema(&self) -> Result<()> {
         if self.schema_version > 1 {
             return Err(anyhow!(
-                "SchemaTooNew: profiles.yaml schema_version {} is newer than this CLI; read-only commands are allowed but writes require upgrading any-switch",
+                "SchemaTooNew: profiles.yaml schema_version {} is newer than this CLI; read-only commands are allowed but writes require upgrading ha-switch",
                 self.schema_version
             ));
         }
@@ -106,7 +106,7 @@ impl ProfileStore {
             .find(|profile| profile.schema_version > 1)
         {
             return Err(anyhow!(
-                "SchemaTooNew: profile {} schema_version {} is newer than this CLI; read-only commands are allowed but writes require upgrading any-switch",
+                "SchemaTooNew: profile {} schema_version {} is newer than this CLI; read-only commands are allowed but writes require upgrading ha-switch",
                 profile.id,
                 profile.schema_version
             ));

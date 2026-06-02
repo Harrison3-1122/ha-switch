@@ -2,13 +2,13 @@
 
 [简体中文](user-guide.zh-CN.md)
 
-This guide explains how to use `any-switch` as an everyday local app profile
+This guide explains how to use `ha-switch` as an everyday local app profile
 switcher. It avoids implementation details; see `docs/design.md` when you need
 the architecture and safety model.
 
 ## Core Ideas
 
-An **app** is a local tool whose state can be managed by `any-switch`. A build
+An **app** is a local tool whose state can be managed by `ha-switch`. A build
 can include built-in app definitions, and users can add more definitions under
 `apps.d/*.yaml`.
 
@@ -22,8 +22,8 @@ A **profile** is one named app state. For example:
 A **target** is a local place that the app reads or writes, such as a JSON file,
 TOML subtree, plain file, Keychain item, or environment fragment.
 
-`any-switch` never logs in to remote services for you. You log in or configure
-the app normally, then use `any-switch` to save and replay the local state.
+`ha-switch` never logs in to remote services for you. You log in or configure
+the app normally, then use `ha-switch` to save and replay the local state.
 
 ## First Run
 
@@ -32,7 +32,7 @@ import has real local evidence; broader restart checks plus Linux and Windows
 real-app evidence are tracked as follow-up work before the project claims full
 `docs/design.md` section 13 coverage.
 
-`any-switch` is distributed as a source-built CLI. The install command compiles
+`ha-switch` is distributed as a source-built CLI. The install command compiles
 the Rust binary on your machine instead of downloading an unsigned macOS or
 Windows binary.
 
@@ -47,22 +47,22 @@ If `rustup` is not installed yet, install Rust from <https://rustup.rs> first.
 For most npm-based CLI users:
 
 ```bash
-npm install -g any-switch
-any-switch --version
+npm install -g ha-switch
+ha-switch --version
 ```
 
 The first npm install can take a little while because it runs Cargo once and
 stores the compiled binary inside the npm package. After that, run
-`any-switch` directly.
+`ha-switch` directly.
 
 For Rust users:
 
 ```bash
-cargo install any-switch --locked
-any-switch --version
+cargo install ha-switch --locked
+ha-switch --version
 ```
 
-`npx any-switch --version` can work for a quick trial, but it may compile on
+`npx ha-switch --version` can work for a quick trial, but it may compile on
 first use and may compile again if npm's cache is cleared. Prefer a global
 install for regular use.
 
@@ -75,30 +75,34 @@ cargo install --path .
 Check which apps this build knows about:
 
 ```bash
-any-switch apps
+ha-switch apps
 ```
 
 Find the active `profiles.yaml` path and check local safety diagnostics:
 
 ```bash
-any-switch config path
-any-switch doctor
+ha-switch config path
+ha-switch doctor
 ```
 
 `config path` prints the main editable profile registry. `doctor` prints the
-any-switch home directory, the `profiles.yaml` path, permission checks, known
+ha-switch home directory, the `profiles.yaml` path, permission checks, known
 cloud-sync warnings, and app-specific diagnostics.
 
-By default, profiles and captures live under `~/.any-switch`. This directory can
+By default, profiles and captures live under `~/.ha-switch`. This directory can
 contain static secrets, OAuth captures, and defensive backups. Keep it out of
 cloud-synced folders such as iCloud Drive, Dropbox, OneDrive, and Google Drive;
 `doctor` warns when it detects a known sync root.
+
+`HA_SWITCH_HOME` is the preferred override. The legacy `ANY_SWITCH_HOME`
+variable is still read as a fallback for existing scripts, but the new name
+takes precedence.
 
 To use a separate state directory for testing, choose an absolute path under
 your home directory:
 
 ```bash
-export ANY_SWITCH_HOME="$HOME/.any-switch-test"
+export HA_SWITCH_HOME="$HOME/.ha-switch-test"
 ```
 
 ## Save the Current State
@@ -106,7 +110,7 @@ export ANY_SWITCH_HOME="$HOME/.any-switch-test"
 Use `import-current` after the app is already configured or logged in:
 
 ```bash
-any-switch import-current <app> personal
+ha-switch import-current <app> personal
 ```
 
 For OAuth-based app state, close the target app before importing. If the app is
@@ -117,7 +121,7 @@ for that escape hatch.
 For built-in Claude OAuth, a typical first capture is:
 
 ```bash
-any-switch import-current claude personal --kind oauth_capture
+ha-switch import-current claude personal --kind oauth_capture
 ```
 
 Use the process-probe escape hatch only for false positives. OAuth tokens can
@@ -127,7 +131,7 @@ save an incomplete or stale capture.
 For built-in Codex, a typical first capture is:
 
 ```bash
-any-switch import-current codex personal
+ha-switch import-current codex personal
 ```
 
 ## Add a Static Profile
@@ -137,13 +141,13 @@ key, endpoint, provider, model, or environment value. The available fields come
 from the selected app definition and profile kind.
 
 ```bash
-any-switch add <app> work --kind <kind> --field key=value
+ha-switch add <app> work --kind <kind> --field key=value
 ```
 
 For built-in Codex API-key state:
 
 ```bash
-any-switch add codex openai --kind file_template \
+ha-switch add codex openai --kind file_template \
   --secret-field api_key=@prompt \
   --field model=gpt-5-codex \
   --field model_provider=openai
@@ -152,7 +156,7 @@ any-switch add codex openai --kind file_template \
 For Claude-style environment injection:
 
 ```bash
-any-switch add claude proxy \
+ha-switch add claude proxy \
   --kind env_injection \
   --field base_url=https://example.test/api \
   --field models.default=example-model \
@@ -173,18 +177,35 @@ Use `@prompt` for normal interactive setup. Use `@env:NAME`, `@stdin`, or
 `@file:PATH` when scripting. Avoid placing secret values directly in shell
 commands.
 
+## Migrate Codex History
+
+Codex profile switching manages only Codex `auth.json` and selected
+`config.toml` fields. Conversation history stays shared under `CODEX_HOME` and
+is not captured, backed up, restored, or deleted by profile switching.
+
+Preview and merge an old Codex home into the current one:
+
+```bash
+ha-switch codex-history migrate --from /path/to/old-codex-home --dry-run
+ha-switch codex-history migrate --from /path/to/old-codex-home --yes
+```
+
+The migration appends missing `history.jsonl` and `session_index.jsonl` lines,
+copies missing `sessions/` files, skips identical files, and stops on
+conflicting session files without overwriting them.
+
 ## Switch Profiles
 
 Preview first:
 
 ```bash
-any-switch use <profile-id> --dry-run
+ha-switch use <profile-id> --dry-run
 ```
 
 Apply the profile:
 
 ```bash
-any-switch use <profile-id>
+ha-switch use <profile-id>
 ```
 
 In an interactive terminal, confirm the write by typing `yes` when prompted.
@@ -200,13 +221,13 @@ another account's profile.
 Use `status` for a quick comparison:
 
 ```bash
-any-switch status <app>
+ha-switch status <app>
 ```
 
 Use `doctor` for more detail:
 
 ```bash
-any-switch doctor <app>
+ha-switch doctor <app>
 ```
 
 These commands redact secret values.
@@ -234,28 +255,28 @@ detected, remove the flag and rerun the command.
 
 ### DriftBeforeWriteback
 
-The live app identity no longer matches the profile that `any-switch` currently
+The live app identity no longer matches the profile that `ha-switch` currently
 considers active. The switch is blocked so the wrong live state is not written
 back to the old profile.
 
 Inspect the drift:
 
 ```bash
-any-switch status <app>
-any-switch doctor <app>
+ha-switch status <app>
+ha-switch doctor <app>
 ```
 
 If the live state is a useful new profile:
 
 ```bash
-any-switch import-current <app> <new-name>
+ha-switch import-current <app> <new-name>
 ```
 
 If you want to discard the live state and restore a saved profile:
 
 ```bash
-any-switch detach <app>
-any-switch use <profile-id>
+ha-switch detach <app>
+ha-switch use <profile-id>
 ```
 
 ### IdentityMissing
@@ -264,7 +285,7 @@ The current app state does not contain the identity fields required by the app
 definition. Make sure the app is logged in or configured, then run:
 
 ```bash
-any-switch doctor <app>
+ha-switch doctor <app>
 ```
 
 If the app is not using OAuth, retry the import with the right `--kind`, or use
@@ -275,7 +296,7 @@ If the app is not using OAuth, retry the import with the right `--kind`, or use
 The app has no complete importable state for the selected kind. Run:
 
 ```bash
-any-switch doctor <app>
+ha-switch doctor <app>
 ```
 
 For OAuth profiles, check the `definition_capture_source` rows. They show
@@ -293,7 +314,7 @@ More than one import rule matches the current app state. Choose the intended
 kind explicitly:
 
 ```bash
-any-switch import-current <app> <name> --kind <kind>
+ha-switch import-current <app> <name> --kind <kind>
 ```
 
 Or clean up the app's live config so only one state remains.
@@ -306,22 +327,22 @@ Close the target app and retry. For OAuth or process-sensitive operations, use
 
 ## Backups and Restore
 
-Before writing managed targets, `any-switch` creates backups.
+Before writing managed targets, `ha-switch` creates backups.
 
 List backups:
 
 ```bash
-any-switch backup list
+ha-switch backup list
 ```
 
 Restore an app from a backup:
 
 ```bash
-any-switch restore-target <app> <backup-id>
+ha-switch restore-target <app> <backup-id>
 ```
 
 `restore-target` restores live app state from the backup but does not mark a
-profile active. Run `any-switch status <app>` afterwards to inspect whether the
+profile active. Run `ha-switch status <app>` afterwards to inspect whether the
 restored state matches the active profile. Confirm by typing `yes` in an
 interactive terminal, or add `--yes` in scripts and CI. For OAuth or
 process-sensitive targets, restore follows the same stop-app rule as switching.
@@ -329,10 +350,10 @@ process-sensitive targets, restore follows the same stop-app rule as switching.
 Remove a saved profile when you no longer need it:
 
 ```bash
-any-switch remove <profile-id>
+ha-switch remove <profile-id>
 ```
 
-`remove` deletes the profile and its any-switch capture files. It does not clear
+`remove` deletes the profile and its ha-switch capture files. It does not clear
 or restore the target app's current live state. Confirm by typing `yes` in an
 interactive terminal, or add `--yes` in scripts and CI.
 
@@ -341,10 +362,10 @@ interactive terminal, or add `--yes` in scripts and CI.
 Open a saved profile in your editor:
 
 ```bash
-any-switch edit <profile-id>
+ha-switch edit <profile-id>
 ```
 
-`any-switch` uses `$VISUAL`, then `$EDITOR`, then the platform default editor
+`ha-switch` uses `$VISUAL`, then `$EDITOR`, then the platform default editor
 for the build target. It validates the edited profile before saving it.
 
 ## Add More Apps
@@ -352,17 +373,17 @@ for the build target. It validates the edited profile before saving it.
 User app definitions live under:
 
 ```text
-~/.any-switch/apps.d/*.yaml
+~/.ha-switch/apps.d/*.yaml
 ```
 
 Use:
 
 ```bash
-any-switch apps validate <path>
-any-switch apps show <app>
-any-switch apps export <app> --source system
-any-switch apps export <app> --source resolved
-any-switch apps export <app> --as override --output ~/.any-switch/overrides.d/<app>.yaml
+ha-switch apps validate <path>
+ha-switch apps show <app>
+ha-switch apps export <app> --source system
+ha-switch apps export <app> --source resolved
+ha-switch apps export <app> --as override --output ~/.ha-switch/overrides.d/<app>.yaml
 ```
 
 Definitions should describe local state declaratively and reuse trusted handlers

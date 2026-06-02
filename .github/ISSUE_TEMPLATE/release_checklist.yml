@@ -34,10 +34,10 @@ body:
         - 2: macOS Claude OAuth import: passed.
           Evidence summary:
           - `scripts/verify-local.sh` passed on macOS arm64.
-          - `any-switch doctor claude` reported no running Claude process before import.
-          - `any-switch import-current claude manual-macos --kind oauth_capture` succeeded.
-          - `any-switch show claude-manual-macos` showed `oauth_capture` and required identity fields, with values redacted.
-          - `any-switch status claude` reported `matched`.
+          - `ha-switch doctor claude` reported no running Claude process before import.
+          - `ha-switch import-current claude manual-macos --kind oauth_capture` succeeded.
+          - `ha-switch show claude-manual-macos` showed `oauth_capture` and required identity fields, with values redacted.
+          - `ha-switch status claude` reported `matched`.
           Evidence link: ...
 
         Deferred items:

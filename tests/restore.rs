@@ -17,25 +17,25 @@ fn restore_oauth_backup_ignores_allow_running_and_requires_assume_app_stopped() 
         .unwrap();
     write_codex_oauth(codex_home.path(), "acct-a", "refresh-a");
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["import-current", "codex", "a", "--kind", "oauth_capture"])
         .assert()
         .success();
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["detach", "codex"])
         .assert()
         .success();
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["use", "codex-a", "--yes"])
@@ -45,9 +45,9 @@ fn restore_oauth_backup_ignores_allow_running_and_requires_assume_app_stopped() 
         .pop()
         .expect("backup id");
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env(
             "ANY_SWITCH_PROCESS_PROBE_FIXTURE",
@@ -64,9 +64,9 @@ fn restore_oauth_backup_ignores_allow_running_and_requires_assume_app_stopped() 
         .failure()
         .stderr(contains("AppRunning"));
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env(
             "ANY_SWITCH_PROCESS_PROBE_FIXTURE",
@@ -115,9 +115,9 @@ profiles: []
     )
     .unwrap();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("FIRST_API_KEY", "sk-first")
         .args([
@@ -134,9 +134,9 @@ profiles: []
         .assert()
         .success();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("SECOND_API_KEY", "sk-second")
         .args([
@@ -153,17 +153,17 @@ profiles: []
         .assert()
         .success();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["use", "codex-first", "--yes"])
         .assert()
         .success();
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["use", "codex-second", "--yes"])
@@ -179,9 +179,9 @@ profiles: []
     let profiles_mtime_before_restore = fs::metadata(&profiles_path).unwrap().modified().unwrap();
     std::thread::sleep(std::time::Duration::from_millis(20));
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["restore-target", "codex", &restore_from, "--yes"])
@@ -244,17 +244,17 @@ fn restore_target_rejects_unsafe_backup_id_before_reading_manifest() {
                 "path": auth_path.display().to_string(),
                 "resolved_path": auth_path.display().to_string(),
                 "stored_as": "target-0.bak",
-                "sha256": any_switch::backup::sha256_hex(&blob)
+                "sha256": ha_switch::backup::sha256_hex(&blob)
             }]
         }))
         .unwrap(),
     )
     .unwrap();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
-        .env("ANY_SWITCH_TEST_HOME", &cwd)
+        .env("HA_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_TEST_HOME", &cwd)
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["restore-target", "codex", "../escape", "--yes"])

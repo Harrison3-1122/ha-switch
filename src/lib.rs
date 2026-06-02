@@ -2,6 +2,7 @@ pub mod app_definitions;
 pub mod backup;
 pub mod capture;
 pub mod cli;
+pub mod codex_history;
 pub mod handlers;
 pub mod identity;
 pub mod keychain;

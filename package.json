@@ -1,15 +1,15 @@
 {
-  "name": "any-switch",
+  "name": "ha-switch",
   "version": "0.1.2",
   "description": "Local app profile/state switcher.",
   "license": "MIT",
-  "homepage": "https://github.com/riverscn/any-switch",
+  "homepage": "https://github.com/Harrison3-1122/ha-switch",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/riverscn/any-switch.git"
+    "url": "git+https://github.com/Harrison3-1122/ha-switch.git"
   },
   "bugs": {
-    "url": "https://github.com/riverscn/any-switch/issues"
+    "url": "https://github.com/Harrison3-1122/ha-switch/issues"
   },
   "keywords": [
     "cli",
@@ -18,7 +18,7 @@
     "switcher"
   ],
   "bin": {
-    "any-switch": "bin/any-switch.js"
+    "ha-switch": "bin/ha-switch.js"
   },
   "scripts": {
     "postinstall": "node npm/install.js"

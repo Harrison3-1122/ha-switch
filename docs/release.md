@@ -27,7 +27,7 @@ distribution model.
 the Cargo package file list, rejects local-only credential/evidence paths,
 installs the CLI through Cargo into a temporary root, packs the npm tarball,
 rejects package-only docs and local state paths, installs from the packed npm
-tarball into a temporary prefix, and verifies `any-switch --version` plus the
+tarball into a temporary prefix, and verifies `ha-switch --version` plus the
 built-in app list.
 
 If `pwsh` is installed locally, `scripts/verify-local.sh` also checks the
@@ -38,7 +38,7 @@ PowerShell helper through Windows PowerShell.
 is verified in GitHub Actions by the `windows build` job, including
 target-specific Clippy, selected Windows smoke tests,
 `scripts/manual-evidence.ps1 -Help`, and a local package smoke for
-`any-switch.exe`. This proves the code builds on Windows without distributing an
+`ha-switch.exe`. This proves the code builds on Windows without distributing an
 unsigned Windows executable to users.
 
 CI uses a per-ref concurrency group and cancels older in-progress runs for the
@@ -78,10 +78,10 @@ Current-stage blocker:
 - 2: macOS Claude OAuth import: passed.
   Evidence summary:
   - scripts/verify-local.sh passed on macOS arm64.
-  - any-switch doctor claude reported no running Claude process before import.
-  - any-switch import-current claude manual-macos --kind oauth_capture succeeded.
-  - any-switch show claude-manual-macos showed oauth_capture and required identity fields, with values redacted.
-  - any-switch status claude reported matched.
+  - ha-switch doctor claude reported no running Claude process before import.
+  - ha-switch import-current claude manual-macos --kind oauth_capture succeeded.
+  - ha-switch show claude-manual-macos showed oauth_capture and required identity fields, with values redacted.
+  - ha-switch status claude reported matched.
 
 Deferred items:
 - tracked in docs/evidence-followups.md.
@@ -151,17 +151,17 @@ the auditable record for those definitions.
 
 ## npm Package
 
-The npm package bundles the Rust source files needed to build `any-switch`
+The npm package bundles the Rust source files needed to build `ha-switch`
 locally. During `npm install`, `npm/install.js` checks for `cargo`, runs
 `cargo build --release --locked`, copies the resulting binary into `vendor/`,
-and exposes it through the `any-switch` npm bin shim. npm does not install
+and exposes it through the `ha-switch` npm bin shim. npm does not install
 Rust itself; users must install Rust first.
 
 Before publishing to npm:
 
 ```bash
 scripts/verify-packages.sh
-npm_config_cache=/private/tmp/any-switch-npm-cache npm publish --dry-run
+npm_config_cache=/private/tmp/ha-switch-npm-cache npm publish --dry-run
 ```
 
 ## Cargo Package
@@ -177,7 +177,7 @@ cargo publish --locked
 Users can then install with:
 
 ```bash
-cargo install any-switch --locked
+cargo install ha-switch --locked
 ```
 
 ## Post-Release Checks
@@ -185,31 +185,31 @@ cargo install any-switch --locked
 Verify the published package paths:
 
 ```bash
-npm view any-switch version
-cargo search any-switch
+npm view ha-switch version
+cargo search ha-switch
 ```
 
 Install into temporary locations where possible:
 
 ```bash
-tmpdir=$(mktemp -d /private/tmp/any-switch-npm-post.XXXXXX)
-npm_config_cache=/private/tmp/any-switch-npm-cache npm install -g --prefix "$tmpdir" any-switch
-"$tmpdir/bin/any-switch" --version
+tmpdir=$(mktemp -d /private/tmp/ha-switch-npm-post.XXXXXX)
+npm_config_cache=/private/tmp/ha-switch-npm-cache npm install -g --prefix "$tmpdir" ha-switch
+"$tmpdir/bin/ha-switch" --version
 
-cargo install any-switch --locked --root /private/tmp/any-switch-cargo-post
-/private/tmp/any-switch-cargo-post/bin/any-switch --version
+cargo install ha-switch --locked --root /private/tmp/ha-switch-cargo-post
+/private/tmp/ha-switch-cargo-post/bin/ha-switch --version
 ```
 
 For the current stage, run the macOS Claude OAuth import release blocker in
 `docs/manual-verification.md` before tagging. Before claiming full MVP coverage,
 also complete the deferred follow-up checks. The manual evidence helpers remain
-in the source repository; use `ANY_SWITCH_BIN` to point them at the binary being
+in the source repository; use `HA_SWITCH_BIN` to point them at the binary being
 checked.
 
 On Linux and macOS:
 
 ```bash
-ANY_SWITCH_BIN="$(command -v any-switch)" \
+HA_SWITCH_BIN="$(command -v ha-switch)" \
   scripts/manual-evidence.sh \
   manual-evidence-$(date -u +%Y%m%dT%H%M%SZ).md
 ```
@@ -217,7 +217,7 @@ ANY_SWITCH_BIN="$(command -v any-switch)" \
 On Windows:
 
 ```powershell
-$env:ANY_SWITCH_BIN = (Get-Command any-switch).Source
+$env:HA_SWITCH_BIN = (Get-Command ha-switch).Source
 powershell -NoProfile -ExecutionPolicy Bypass -File `
   scripts\manual-evidence.ps1 `
   manual-evidence-<tag>-windows.md

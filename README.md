@@ -1,8 +1,8 @@
-# any-switch
+# ha-switch
 
 [简体中文](README.zh-CN.md)
 
-`any-switch` switches local app profiles and state.
+`ha-switch` switches local app profiles and state.
 
 Use it when one app has several local setups and you want to move between them
 without hand-editing files, copying tokens, or remembering which config entries
@@ -17,12 +17,12 @@ Examples:
 
 The first built-in apps are Claude Code and OpenAI Codex. The tool itself is not
 AI-specific: app definitions describe what local state can be captured and
-restored, and `any-switch` handles the backup, redaction, drift checks, and
+restored, and `ha-switch` handles the backup, redaction, drift checks, and
 write safety around that state.
 
 ## What It Does
 
-`any-switch` keeps named profiles on your machine. A profile is the local state
+`ha-switch` keeps named profiles on your machine. A profile is the local state
 you want an app to use, such as:
 
 - account identity and OAuth credential state;
@@ -31,12 +31,12 @@ you want an app to use, such as:
 - JSON, TOML, file, Keychain, or environment fragments declared by an app
   definition.
 
-When you switch profiles, `any-switch` shows the plan, creates backups, writes
+When you switch profiles, `ha-switch` shows the plan, creates backups, writes
 only the declared targets, and avoids printing secret values.
 
 ## Install
 
-`any-switch` is distributed as a source-built CLI. The install command compiles
+`ha-switch` is distributed as a source-built CLI. The install command compiles
 the Rust binary on your machine instead of downloading an unsigned macOS or
 Windows binary.
 
@@ -53,27 +53,27 @@ rustup toolchain install 1.95.0
 
 If `rustup` is not installed yet, install Rust from <https://rustup.rs> first.
 
-### 2. Install any-switch
+### 2. Install ha-switch
 
 For most npm-based CLI users:
 
 ```bash
-npm install -g any-switch
-any-switch --version
+npm install -g ha-switch
+ha-switch --version
 ```
 
 The first npm install can take a little while because it runs Cargo once and
 stores the compiled binary inside the npm package. After that, run
-`any-switch` directly.
+`ha-switch` directly.
 
 For Rust users:
 
 ```bash
-cargo install any-switch --locked
-any-switch --version
+cargo install ha-switch --locked
+ha-switch --version
 ```
 
-`npx any-switch --version` can work for a quick trial, but it may compile on
+`npx ha-switch --version` can work for a quick trial, but it may compile on
 first use and may compile again if npm's cache is cleared. Prefer a global
 install for regular use.
 
@@ -86,8 +86,8 @@ cargo install --path .
 Check the installation:
 
 ```bash
-any-switch --version
-any-switch doctor
+ha-switch --version
+ha-switch doctor
 ```
 
 ## Quick Start
@@ -95,41 +95,41 @@ any-switch doctor
 See the apps that this build knows about:
 
 ```bash
-any-switch apps
+ha-switch apps
 ```
 
 Capture the current login or state of an app as a profile:
 
 ```bash
-any-switch import-current <app> personal
+ha-switch import-current <app> personal
 ```
 
 List saved profiles:
 
 ```bash
-any-switch list
+ha-switch list
 ```
 
 Switch to a profile:
 
 ```bash
-any-switch use <profile-id> --dry-run
-any-switch use <profile-id>
+ha-switch use <profile-id> --dry-run
+ha-switch use <profile-id>
 ```
 
 Check what is active:
 
 ```bash
-any-switch status <app>
-any-switch doctor <app>
+ha-switch status <app>
+ha-switch doctor <app>
 ```
 
 Built-in examples:
 
 ```bash
-any-switch import-current codex personal
-any-switch import-current claude work --kind oauth_capture
-any-switch use codex-personal
+ha-switch import-current codex personal
+ha-switch import-current claude work --kind oauth_capture
+ha-switch use codex-personal
 ```
 
 ## Common Workflows
@@ -140,14 +140,14 @@ Use `import-current` after you have already logged in or configured the target
 app in the normal way:
 
 ```bash
-any-switch import-current <app> personal
+ha-switch import-current <app> personal
 ```
 
 This is the right flow for OAuth-based app state, because the app owns the real
-login process. `any-switch` captures the local state after login; it does not log
+login process. `ha-switch` captures the local state after login; it does not log
 in for you. For built-in apps this may look like
-`any-switch import-current codex personal` or
-`any-switch import-current claude work --kind oauth_capture`.
+`ha-switch import-current codex personal` or
+`ha-switch import-current claude work --kind oauth_capture`.
 
 ### Add a Static Profile
 
@@ -156,13 +156,13 @@ model, provider, or base URL. Field names are defined by the selected app
 definition and profile kind:
 
 ```bash
-any-switch add <app> work --kind <kind> --field key=value
+ha-switch add <app> work --kind <kind> --field key=value
 ```
 
 Built-in Codex example:
 
 ```bash
-any-switch add codex openai --kind file_template \
+ha-switch add codex openai --kind file_template \
   --secret-field api_key=@prompt \
   --field model=gpt-5-codex \
   --field model_provider=openai
@@ -181,12 +181,27 @@ environment variable, or a local file:
 Use `@prompt` for normal interactive setup. Use `@env:NAME`, `@stdin`, or
 `@file:PATH` when scripting.
 
+### Migrate Codex History
+
+Codex profile switching only manages `auth.json` and selected `config.toml`
+fields. `history.jsonl`, `session_index.jsonl`, and `sessions/` remain shared
+conversation state under one `CODEX_HOME`. If you previously used multiple
+Codex homes, preview and merge an old home into the current one:
+
+```bash
+ha-switch codex-history migrate --from /path/to/old-codex-home --dry-run
+ha-switch codex-history migrate --from /path/to/old-codex-home --yes
+```
+
+Migration does not delete the source directory, overwrite conflicting session
+files, or modify Codex `auth.json` / `config.toml`.
+
 ### Preview Before Writing
 
 Use `--dry-run` to inspect a switch without changing local files:
 
 ```bash
-any-switch use <profile-id> --dry-run
+ha-switch use <profile-id> --dry-run
 ```
 
 ### Recover a Target From Backup
@@ -194,37 +209,38 @@ any-switch use <profile-id> --dry-run
 Backups are created before managed targets are overwritten. Inspect them with:
 
 ```bash
-any-switch backup list
+ha-switch backup list
 ```
 
 Restore an app from a specific backup when needed:
 
 ```bash
-any-switch restore-target <app> <backup-id>
+ha-switch restore-target <app> <backup-id>
 ```
 
 `restore-target` restores live app state from the backup. It does not mark a
-profile active, so run `any-switch status <app>` afterwards to inspect the
+profile active, so run `ha-switch status <app>` afterwards to inspect the
 result. Confirm the restore by typing `yes` in an interactive terminal, or add
 `--yes` in scripts and CI.
 
 ## Safety Notes
 
-- Profiles are stored under `~/.any-switch` by default. This directory can
+- Profiles are stored under `~/.ha-switch` by default. This directory can
   contain static secrets, OAuth captures, and defensive backups. Keep it out of
   cloud-synced folders such as iCloud Drive, Dropbox, OneDrive, and Google
-  Drive; `doctor` warns when it detects a known sync root. Set `ANY_SWITCH_HOME`
+  Drive; `doctor` warns when it detects a known sync root. Set `HA_SWITCH_HOME`
   to an absolute path under your home directory if you want a separate state
-  directory.
+  directory. The old `ANY_SWITCH_HOME` variable is still read as a fallback, but
+  `HA_SWITCH_HOME` takes precedence.
 - Secret values are redacted from normal command output and JSON output.
-- Do not commit `~/.any-switch` or any generated profile/capture files.
+- Do not commit `~/.ha-switch` or any generated profile/capture files.
 - Quit the target app before OAuth or process-sensitive operations. OAuth
   credentials can rotate while the app is running, so `--allow-running` does not
   apply to those operations.
 - Use `--assume-app-stopped` only when the app is actually stopped but process
   detection reports a false positive; confirm with `--yes` in scripts or by
   typing `yes` in an interactive terminal. Do not pass it preemptively: if no
-  matching process was detected, any-switch rejects the flag and asks you to
+  matching process was detected, ha-switch rejects the flag and asks you to
   retry without it.
 - For static file or environment profiles, `--allow-running` is available,
   but stopping the app first is still safer because the app may rewrite its own
@@ -243,9 +259,9 @@ result. Confirm the restore by typing `yes` in an interactive terminal, or add
 Start with:
 
 ```bash
-any-switch doctor
-any-switch doctor <app>
-any-switch status <app>
+ha-switch doctor
+ha-switch doctor <app>
+ha-switch status <app>
 ```
 
 Useful next steps:
@@ -271,48 +287,48 @@ Useful next steps:
 
 ## Custom Apps
 
-`any-switch` can be extended with app definitions under `apps.d/*.yaml`.
+`ha-switch` can be extended with app definitions under `apps.d/*.yaml`.
 Definitions declare the local targets an app uses and which trusted handlers can
 capture or write them. This lets new apps reuse the same safety model without
 adding app-specific branches to the core CLI.
 
 For the full model, see
-[docs/design.md](https://github.com/riverscn/any-switch/blob/main/docs/design.md).
+[docs/design.md](https://github.com/Harrison3-1122/ha-switch/blob/main/docs/design.md).
 
 To inspect or customize app definitions:
 
 ```bash
-any-switch apps show <app>
-any-switch apps export <app> --source system
-any-switch apps export <app> --source resolved
-any-switch apps export <app> --as override --output ~/.any-switch/overrides.d/<app>.yaml
-any-switch apps validate ~/.any-switch/overrides.d/<app>.yaml
+ha-switch apps show <app>
+ha-switch apps export <app> --source system
+ha-switch apps export <app> --source resolved
+ha-switch apps export <app> --as override --output ~/.ha-switch/overrides.d/<app>.yaml
+ha-switch apps validate ~/.ha-switch/overrides.d/<app>.yaml
 ```
 
 ## More Docs
 
-- [docs/user-guide.md](https://github.com/riverscn/any-switch/blob/main/docs/user-guide.md):
+- [docs/user-guide.md](https://github.com/Harrison3-1122/ha-switch/blob/main/docs/user-guide.md):
   practical user guide with common workflows, safety flags, and
   troubleshooting.
 - [README.zh-CN.md](README.zh-CN.md): simplified Chinese README.
-- [docs/user-guide.zh-CN.md](https://github.com/riverscn/any-switch/blob/main/docs/user-guide.zh-CN.md):
+- [docs/user-guide.zh-CN.md](https://github.com/Harrison3-1122/ha-switch/blob/main/docs/user-guide.zh-CN.md):
   simplified Chinese user guide.
-- [docs/design.md](https://github.com/riverscn/any-switch/blob/main/docs/design.md):
+- [docs/design.md](https://github.com/Harrison3-1122/ha-switch/blob/main/docs/design.md):
   architecture and safety model.
-- [docs/manual-verification.md](https://github.com/riverscn/any-switch/blob/main/docs/manual-verification.md):
+- [docs/manual-verification.md](https://github.com/Harrison3-1122/ha-switch/blob/main/docs/manual-verification.md):
   real-app checks that cannot be fully proven in CI.
-- [docs/acceptance.md](https://github.com/riverscn/any-switch/blob/main/docs/acceptance.md):
+- [docs/acceptance.md](https://github.com/Harrison3-1122/ha-switch/blob/main/docs/acceptance.md):
   acceptance coverage.
-- [docs/evidence-followups.md](https://github.com/riverscn/any-switch/blob/main/docs/evidence-followups.md):
+- [docs/evidence-followups.md](https://github.com/Harrison3-1122/ha-switch/blob/main/docs/evidence-followups.md):
   deferred manual evidence tracking before full section 13 coverage is claimed.
-- [docs/release.md](https://github.com/riverscn/any-switch/blob/main/docs/release.md):
+- [docs/release.md](https://github.com/Harrison3-1122/ha-switch/blob/main/docs/release.md):
   release packaging and signing.
 - [CHANGELOG.md](CHANGELOG.md): user-facing release notes.
-- [CONTRIBUTING.md](https://github.com/riverscn/any-switch/blob/main/CONTRIBUTING.md):
+- [CONTRIBUTING.md](https://github.com/Harrison3-1122/ha-switch/blob/main/CONTRIBUTING.md):
   development and contribution rules.
-- [.github/ISSUE_TEMPLATE/release_checklist.yml](https://github.com/riverscn/any-switch/blob/main/.github/ISSUE_TEMPLATE/release_checklist.yml):
+- [.github/ISSUE_TEMPLATE/release_checklist.yml](https://github.com/Harrison3-1122/ha-switch/blob/main/.github/ISSUE_TEMPLATE/release_checklist.yml):
   release evidence checklist for maintainers.
-- [CODE_OF_CONDUCT.md](https://github.com/riverscn/any-switch/blob/main/CODE_OF_CONDUCT.md):
+- [CODE_OF_CONDUCT.md](https://github.com/Harrison3-1122/ha-switch/blob/main/CODE_OF_CONDUCT.md):
   community standards.
 - [SECURITY.md](SECURITY.md): vulnerability reporting.
 

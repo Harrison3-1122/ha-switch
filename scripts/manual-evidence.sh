@@ -3,9 +3,9 @@ set -euo pipefail
 
 usage() {
   echo "usage: manual-evidence.sh [output.md]" >&2
-  echo "set ANY_SWITCH_BIN=/path/to/any-switch to test a packaged binary" >&2
-  echo "set ANY_SWITCH_HOME=/abs/path-under-home to use an existing any-switch home" >&2
-  echo "without ANY_SWITCH_HOME, a temporary any-switch home is created and removed" >&2
+  echo "set HA_SWITCH_BIN=/path/to/ha-switch to test a packaged binary" >&2
+  echo "set HA_SWITCH_HOME=/abs/path-under-home to use an existing ha-switch home" >&2
+  echo "without HA_SWITCH_HOME, a temporary ha-switch home is created and removed" >&2
   echo "refuses to overwrite an existing evidence file" >&2
 }
 
@@ -14,7 +14,7 @@ if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
   exit 0
 fi
 
-any_switch="${ANY_SWITCH_BIN:-any-switch}"
+ha_switch="${HA_SWITCH_BIN:-ha-switch}"
 timestamp="$(date -u '+%Y%m%dT%H%M%SZ')"
 output="${1:-manual-evidence-${timestamp}.md}"
 
@@ -24,8 +24,8 @@ if [[ -e "${output}" ]]; then
   exit 2
 fi
 
-if ! command -v "${any_switch}" >/dev/null 2>&1 && [[ ! -x "${any_switch}" ]]; then
-  echo "any-switch binary not found: ${any_switch}" >&2
+if ! command -v "${ha_switch}" >/dev/null 2>&1 && [[ ! -x "${ha_switch}" ]]; then
+  echo "ha-switch binary not found: ${ha_switch}" >&2
   usage
   exit 2
 fi
@@ -34,10 +34,10 @@ umask 077
 
 temporary_switch_home=""
 switch_home_note="provided by environment"
-if [[ -z "${ANY_SWITCH_HOME:-}" ]]; then
-  temporary_switch_home="${HOME:?}/.any-switch-manual-evidence-${timestamp}-$$"
+if [[ -z "${HA_SWITCH_HOME:-}" ]]; then
+  temporary_switch_home="${HOME:?}/.ha-switch-manual-evidence-${timestamp}-$$"
   mkdir -p "${temporary_switch_home}"
-  export ANY_SWITCH_HOME="${temporary_switch_home}"
+  export HA_SWITCH_HOME="${temporary_switch_home}"
   switch_home_note="temporary; removed when this script exits"
 fi
 
@@ -89,12 +89,12 @@ redact_output() {
   printf -- '- Operator:\n'
   printf -- '- OS and version:\n'
   printf -- '- CPU architecture: %s\n' "$(uname -m)"
-  printf -- '- `any-switch --version`:\n'
+  printf -- '- `ha-switch --version`:\n'
   printf -- '- Git commit:\n'
   printf -- '- Claude Code version:\n'
   printf -- '- Codex CLI version:\n'
-  printf -- '- `ANY_SWITCH_HOME` used: %s\n' "${ANY_SWITCH_HOME:-<default>}"
-  printf -- '- `ANY_SWITCH_HOME` note: %s\n' "${switch_home_note}"
+  printf -- '- `HA_SWITCH_HOME` used: %s\n' "${HA_SWITCH_HOME:-<default>}"
+  printf -- '- `HA_SWITCH_HOME` note: %s\n' "${switch_home_note}"
 } >"${output}"
 
 run_section "Host OS" uname -a
@@ -103,8 +103,8 @@ if command -v sw_vers >/dev/null 2>&1; then
 elif [[ -r /etc/os-release ]]; then
   run_section "Linux Version" sh -c 'cat /etc/os-release'
 fi
-run_section "any-switch Version" "${any_switch}" --version
-run_section "any-switch Apps" "${any_switch}" apps
+run_section "ha-switch Version" "${ha_switch}" --version
+run_section "ha-switch Apps" "${ha_switch}" apps
 if command -v git >/dev/null 2>&1 && git rev-parse --show-toplevel >/dev/null 2>&1; then
   run_section "Git Commit" git rev-parse HEAD
 fi
@@ -125,11 +125,11 @@ else
   } >>"${output}"
 fi
 
-run_section "any-switch Doctor" "${any_switch}" doctor
-run_section "Claude Doctor" "${any_switch}" doctor claude
-run_section "Claude Status JSON" "${any_switch}" status claude --json
-run_section "Codex Doctor" "${any_switch}" doctor codex
-run_section "Codex Status JSON" "${any_switch}" status codex --json
+run_section "ha-switch Doctor" "${ha_switch}" doctor
+run_section "Claude Doctor" "${ha_switch}" doctor claude
+run_section "Claude Status JSON" "${ha_switch}" status claude --json
+run_section "Codex Doctor" "${ha_switch}" doctor codex
+run_section "Codex Status JSON" "${ha_switch}" status codex --json
 
 {
   cat <<'EOF'
@@ -177,10 +177,10 @@ deferred item is still pending, failed, or skipped.
 ## Item 2: Claude OAuth Import On macOS
 
 - [ ] Claude Code fully quit before OAuth commands.
-- [ ] `any-switch doctor claude` showed no Claude process rows, or only a documented process-probe warning unrelated to a running Claude app.
-- [ ] `any-switch import-current claude manual-macos --kind oauth_capture` succeeded.
-- [ ] `any-switch show claude-manual-macos` showed `oauth_capture` and required identity fields.
-- [ ] `any-switch status claude` reported `matched`.
+- [ ] `ha-switch doctor claude` showed no Claude process rows, or only a documented process-probe warning unrelated to a running Claude app.
+- [ ] `ha-switch import-current claude manual-macos --kind oauth_capture` succeeded.
+- [ ] `ha-switch show claude-manual-macos` showed `oauth_capture` and required identity fields.
+- [ ] `ha-switch status claude` reported `matched`.
 
 Evidence:
 
@@ -198,7 +198,7 @@ follow-up tracking current in \`docs/evidence-followups.md\`.
 
 - [ ] Capture hashes recorded before Claude Code refresh.
 - [ ] Claude Code used long enough to trigger refresh, then quit.
-- [ ] `any-switch use claude-manual-macos` was confirmed by typing `yes`, then completed or failed with the expected safety error.
+- [ ] `ha-switch use claude-manual-macos` was confirmed by typing `yes`, then completed or failed with the expected safety error.
 - [ ] Capture hash / manifest behavior recorded.
 
 Conclusion:
@@ -213,7 +213,7 @@ write observed rotation behavior here
 - [ ] Only one side was modified.
 - [ ] Claude Code startup behavior recorded.
 - [ ] External backups restored.
-- [ ] `any-switch import-current claude ... --kind oauth_capture` behavior recorded.
+- [ ] `ha-switch import-current claude ... --kind oauth_capture` behavior recorded.
 
 Conclusion:
 
@@ -236,9 +236,9 @@ write sampled JSON behavior here
 ## Item 3: Claude OAuth Import On Linux
 
 - [ ] Claude Code fully stopped.
-- [ ] `any-switch import-current claude manual-linux --kind oauth_capture` succeeded.
-- [ ] `any-switch show claude-manual-linux` showed `oauth_capture` and required identity fields.
-- [ ] `any-switch status claude` reported `matched`.
+- [ ] `ha-switch import-current claude manual-linux --kind oauth_capture` succeeded.
+- [ ] `ha-switch show claude-manual-linux` showed `oauth_capture` and required identity fields.
+- [ ] `ha-switch status claude` reported `matched`.
 - [ ] `captures/claude-manual-linux/credentials.json` and `manifest.json` existed.
 
 Evidence:
@@ -265,10 +265,10 @@ paste redacted command output and app-visible observations here
 ## Windows Release Smoke Test
 
 - [ ] Windows archive checksum verified.
-- [ ] Archive extracted and contained `any-switch.exe`.
-- [ ] `any-switch.exe --version` succeeded.
-- [ ] `any-switch.exe apps` succeeded.
-- [ ] `any-switch.exe doctor` succeeded without packaging/startup failure.
+- [ ] Archive extracted and contained `ha-switch.exe`.
+- [ ] `ha-switch.exe --version` succeeded.
+- [ ] `ha-switch.exe apps` succeeded.
+- [ ] `ha-switch.exe doctor` succeeded without packaging/startup failure.
 
 Evidence:
 
@@ -279,10 +279,10 @@ paste redacted command output here
 ## Preflight E: Codex External Restore Flow
 
 - [ ] Initial Codex profile imported.
-- [ ] Codex auth changed outside any-switch.
-- [ ] Intended state restored outside any-switch.
-- [ ] `any-switch import-current codex manual-codex-refresh --kind auto` succeeded.
-- [ ] `any-switch status codex` reported the expected state.
+- [ ] Codex auth changed outside ha-switch.
+- [ ] Intended state restored outside ha-switch.
+- [ ] `ha-switch import-current codex manual-codex-refresh --kind auto` succeeded.
+- [ ] `ha-switch status codex` reported the expected state.
 
 Conclusion:
 

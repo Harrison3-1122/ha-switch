@@ -15,19 +15,10 @@ pub struct Paths {
 impl Paths {
     pub fn discover() -> Result<Self> {
         let home = current_os_home()?;
-        let switch_home = match env::var_os("ANY_SWITCH_HOME") {
-            Some(raw) => {
-                let path = PathBuf::from(raw);
-                if !path.is_absolute() {
-                    return Err(anyhow!("ANY_SWITCH_HOME must be absolute"));
-                }
-                path
-            }
-            None => home.join(".any-switch"),
-        };
-        ensure_inside_home(&switch_home, &home).map_err(|err| anyhow!("ANY_SWITCH_HOME {err}"))?;
+        let (switch_home, env_name) = switch_home_from_env(&home)?;
+        ensure_inside_home(&switch_home, &home).map_err(|err| anyhow!("{env_name} {err}"))?;
         ensure_existing_ancestor_inside_home(&switch_home, &home)
-            .map_err(|err| anyhow!("ANY_SWITCH_HOME {err}"))?;
+            .map_err(|err| anyhow!("{env_name} {err}"))?;
         Ok(Self { home, switch_home })
     }
 
@@ -91,7 +82,7 @@ impl Paths {
     pub fn ensure_outside_switch_home(&self, path: &Path) -> Result<()> {
         if is_inside(path, &self.switch_home) {
             return Err(anyhow!(
-                "path must not be inside ANY_SWITCH_HOME: {}",
+                "path must not be inside HA_SWITCH_HOME: {}",
                 path.display()
             ));
         }
@@ -103,7 +94,7 @@ impl Paths {
             let real_path = canonical_existing_ancestor(path)?;
             if is_inside(&real_path, &real_switch_home) {
                 return Err(anyhow!(
-                    "path resolves inside ANY_SWITCH_HOME: {} -> {}",
+                    "path resolves inside HA_SWITCH_HOME: {} -> {}",
                     path.display(),
                     real_path.display()
                 ));
@@ -111,6 +102,19 @@ impl Paths {
         }
         Ok(())
     }
+}
+
+fn switch_home_from_env(home: &Path) -> Result<(PathBuf, &'static str)> {
+    for name in ["HA_SWITCH_HOME", "ANY_SWITCH_HOME"] {
+        if let Some(raw) = env::var_os(name) {
+            let path = PathBuf::from(raw);
+            if !path.is_absolute() {
+                return Err(anyhow!("{name} must be absolute"));
+            }
+            return Ok((path, name));
+        }
+    }
+    Ok((home.join(".ha-switch"), "HA_SWITCH_HOME"))
 }
 
 fn expand_defaulted_envs(mut text: String, home: &Path) -> Result<String> {
@@ -309,12 +313,14 @@ pub(crate) fn current_os_home() -> Result<PathBuf> {
     #[cfg(unix)]
     {
         #[cfg(debug_assertions)]
-        if let Some(raw) = env::var_os("ANY_SWITCH_TEST_HOME") {
-            let path = PathBuf::from(raw);
-            if path.is_absolute() {
-                return Ok(path);
+        for name in ["HA_SWITCH_TEST_HOME", "ANY_SWITCH_TEST_HOME"] {
+            if let Some(raw) = env::var_os(name) {
+                let path = PathBuf::from(raw);
+                if path.is_absolute() {
+                    return Ok(path);
+                }
+                return Err(anyhow!("{name} must be absolute"));
             }
-            return Err(anyhow!("ANY_SWITCH_TEST_HOME must be absolute"));
         }
 
         let uid = unsafe { libc::getuid() };
@@ -386,7 +392,7 @@ mod tests {
     fn current_os_user_ignores_user_env() {
         let _guard = ENV_LOCK.get_or_init(|| Mutex::new(())).lock().unwrap();
         let previous = env::var_os("USER");
-        env::set_var("USER", "spoofed-any-switch-user");
+        env::set_var("USER", "spoofed-ha-switch-user");
 
         let user = current_os_user();
 
@@ -395,7 +401,7 @@ mod tests {
         } else {
             env::remove_var("USER");
         }
-        assert_ne!(user, "spoofed-any-switch-user");
+        assert_ne!(user, "spoofed-ha-switch-user");
     }
 
     #[cfg(windows)]
@@ -427,9 +433,9 @@ mod tests {
     fn current_os_home_ignores_home_env() {
         let _guard = ENV_LOCK.get_or_init(|| Mutex::new(())).lock().unwrap();
         let previous_home = env::var_os("HOME");
-        let previous_test_home = env::var_os("ANY_SWITCH_TEST_HOME");
-        env::set_var("HOME", "/tmp/spoofed-any-switch-home");
-        env::remove_var("ANY_SWITCH_TEST_HOME");
+        let previous_test_home = env::var_os("HA_SWITCH_TEST_HOME");
+        env::set_var("HOME", "/tmp/spoofed-ha-switch-home");
+        env::remove_var("HA_SWITCH_TEST_HOME");
 
         let home = current_os_home().unwrap();
 
@@ -439,11 +445,11 @@ mod tests {
             env::remove_var("HOME");
         }
         if let Some(previous_test_home) = previous_test_home {
-            env::set_var("ANY_SWITCH_TEST_HOME", previous_test_home);
+            env::set_var("HA_SWITCH_TEST_HOME", previous_test_home);
         } else {
-            env::remove_var("ANY_SWITCH_TEST_HOME");
+            env::remove_var("HA_SWITCH_TEST_HOME");
         }
-        assert_ne!(home, PathBuf::from("/tmp/spoofed-any-switch-home"));
+        assert_ne!(home, PathBuf::from("/tmp/spoofed-ha-switch-home"));
     }
 
     #[cfg(unix)]
@@ -452,24 +458,73 @@ mod tests {
         let _guard = ENV_LOCK.get_or_init(|| Mutex::new(())).lock().unwrap();
         let home = tempfile::tempdir().unwrap();
         let outside = tempfile::tempdir().unwrap();
-        let previous_home = env::var_os("ANY_SWITCH_TEST_HOME");
-        let previous_switch_home = env::var_os("ANY_SWITCH_HOME");
-        env::set_var("ANY_SWITCH_TEST_HOME", home.path());
-        env::set_var("ANY_SWITCH_HOME", outside.path());
+        let previous_home = env::var_os("HA_SWITCH_TEST_HOME");
+        let previous_switch_home = env::var_os("HA_SWITCH_HOME");
+        env::set_var("HA_SWITCH_TEST_HOME", home.path());
+        env::set_var("HA_SWITCH_HOME", outside.path());
 
         let err = Paths::discover().unwrap_err().to_string();
 
         if let Some(previous_home) = previous_home {
-            env::set_var("ANY_SWITCH_TEST_HOME", previous_home);
+            env::set_var("HA_SWITCH_TEST_HOME", previous_home);
         } else {
-            env::remove_var("ANY_SWITCH_TEST_HOME");
+            env::remove_var("HA_SWITCH_TEST_HOME");
         }
         if let Some(previous_switch_home) = previous_switch_home {
-            env::set_var("ANY_SWITCH_HOME", previous_switch_home);
+            env::set_var("HA_SWITCH_HOME", previous_switch_home);
         } else {
-            env::remove_var("ANY_SWITCH_HOME");
+            env::remove_var("HA_SWITCH_HOME");
         }
-        assert!(err.contains("ANY_SWITCH_HOME path is outside home"));
+        assert!(err.contains("HA_SWITCH_HOME path is outside home"));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn ha_switch_home_takes_precedence_over_legacy_home() {
+        let _guard = ENV_LOCK.get_or_init(|| Mutex::new(())).lock().unwrap();
+        let home = tempfile::tempdir().unwrap();
+        let ha_home = home.path().join(".ha-switch-new");
+        let legacy_home = home.path().join(".ha-switch-legacy");
+        let previous_test_home = env::var_os("HA_SWITCH_TEST_HOME");
+        let previous_legacy_test_home = env::var_os("ANY_SWITCH_TEST_HOME");
+        let previous_ha_home = env::var_os("HA_SWITCH_HOME");
+        let previous_legacy_home = env::var_os("ANY_SWITCH_HOME");
+        env::set_var("HA_SWITCH_TEST_HOME", home.path());
+        env::remove_var("ANY_SWITCH_TEST_HOME");
+        env::set_var("HA_SWITCH_HOME", &ha_home);
+        env::set_var("ANY_SWITCH_HOME", &legacy_home);
+
+        let paths = Paths::discover().unwrap();
+
+        restore_env("HA_SWITCH_TEST_HOME", previous_test_home);
+        restore_env("ANY_SWITCH_TEST_HOME", previous_legacy_test_home);
+        restore_env("HA_SWITCH_HOME", previous_ha_home);
+        restore_env("ANY_SWITCH_HOME", previous_legacy_home);
+        assert_eq!(paths.switch_home, ha_home);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn legacy_any_switch_home_is_fallback() {
+        let _guard = ENV_LOCK.get_or_init(|| Mutex::new(())).lock().unwrap();
+        let home = tempfile::tempdir().unwrap();
+        let legacy_home = home.path().join(".ha-switch-legacy");
+        let previous_test_home = env::var_os("HA_SWITCH_TEST_HOME");
+        let previous_legacy_test_home = env::var_os("ANY_SWITCH_TEST_HOME");
+        let previous_ha_home = env::var_os("HA_SWITCH_HOME");
+        let previous_legacy_home = env::var_os("ANY_SWITCH_HOME");
+        env::set_var("HA_SWITCH_TEST_HOME", home.path());
+        env::remove_var("ANY_SWITCH_TEST_HOME");
+        env::remove_var("HA_SWITCH_HOME");
+        env::set_var("ANY_SWITCH_HOME", &legacy_home);
+
+        let paths = Paths::discover().unwrap();
+
+        restore_env("HA_SWITCH_TEST_HOME", previous_test_home);
+        restore_env("ANY_SWITCH_TEST_HOME", previous_legacy_test_home);
+        restore_env("HA_SWITCH_HOME", previous_ha_home);
+        restore_env("ANY_SWITCH_HOME", previous_legacy_home);
+        assert_eq!(paths.switch_home, legacy_home);
     }
 
     #[cfg(unix)]
@@ -478,25 +533,25 @@ mod tests {
         let _guard = ENV_LOCK.get_or_init(|| Mutex::new(())).lock().unwrap();
         let home = tempfile::tempdir().unwrap();
         let outside = tempfile::tempdir().unwrap();
-        let previous_home = env::var_os("ANY_SWITCH_TEST_HOME");
-        let previous_switch_home = env::var_os("ANY_SWITCH_HOME");
-        env::set_var("ANY_SWITCH_TEST_HOME", home.path());
-        env::remove_var("ANY_SWITCH_HOME");
-        std::os::unix::fs::symlink(outside.path(), home.path().join(".any-switch")).unwrap();
+        let previous_home = env::var_os("HA_SWITCH_TEST_HOME");
+        let previous_switch_home = env::var_os("HA_SWITCH_HOME");
+        env::set_var("HA_SWITCH_TEST_HOME", home.path());
+        env::remove_var("HA_SWITCH_HOME");
+        std::os::unix::fs::symlink(outside.path(), home.path().join(".ha-switch")).unwrap();
 
         let err = Paths::discover().unwrap_err().to_string();
 
         if let Some(previous_home) = previous_home {
-            env::set_var("ANY_SWITCH_TEST_HOME", previous_home);
+            env::set_var("HA_SWITCH_TEST_HOME", previous_home);
         } else {
-            env::remove_var("ANY_SWITCH_TEST_HOME");
+            env::remove_var("HA_SWITCH_TEST_HOME");
         }
         if let Some(previous_switch_home) = previous_switch_home {
-            env::set_var("ANY_SWITCH_HOME", previous_switch_home);
+            env::set_var("HA_SWITCH_HOME", previous_switch_home);
         } else {
-            env::remove_var("ANY_SWITCH_HOME");
+            env::remove_var("HA_SWITCH_HOME");
         }
-        assert!(err.contains("ANY_SWITCH_HOME path resolves outside home"));
+        assert!(err.contains("HA_SWITCH_HOME path resolves outside home"));
     }
 
     #[cfg(unix)]
@@ -504,7 +559,7 @@ mod tests {
     fn target_must_not_resolve_inside_switch_home() {
         let home = tempfile::tempdir().unwrap();
         let real_switch_home = home.path().join("real-switch");
-        let switch_home_link = home.path().join(".any-switch");
+        let switch_home_link = home.path().join(".ha-switch");
         fs::create_dir_all(&real_switch_home).unwrap();
         std::os::unix::fs::symlink(&real_switch_home, &switch_home_link).unwrap();
         let paths = Paths {
@@ -517,7 +572,15 @@ mod tests {
             .unwrap_err()
             .to_string();
 
-        assert!(err.contains("resolves inside ANY_SWITCH_HOME"));
+        assert!(err.contains("resolves inside HA_SWITCH_HOME"));
+    }
+
+    fn restore_env(name: &str, value: Option<std::ffi::OsString>) {
+        if let Some(value) = value {
+            env::set_var(name, value);
+        } else {
+            env::remove_var(name);
+        }
     }
 
     #[test]
@@ -528,7 +591,7 @@ mod tests {
         env::remove_var("TOOLBOX_CONFIG_DIR");
         let paths = Paths {
             home: home.path().to_path_buf(),
-            switch_home: home.path().join(".any-switch"),
+            switch_home: home.path().join(".ha-switch"),
         };
 
         let expanded = paths
@@ -597,7 +660,7 @@ mod tests {
         std::os::unix::fs::symlink(outside.path(), &link).unwrap();
         let paths = Paths {
             home: home.path().to_path_buf(),
-            switch_home: home.path().join(".any-switch"),
+            switch_home: home.path().join(".ha-switch"),
         };
         let err = paths
             .expand_target_path(&link.join("auth.json").display().to_string())

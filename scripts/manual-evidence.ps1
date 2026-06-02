@@ -11,9 +11,9 @@ function Show-Usage {
 
     $lines = @(
         "usage: manual-evidence.ps1 [output.md]",
-        "set ANY_SWITCH_BIN=C:\path\to\any-switch.exe to test a packaged binary",
-        "set ANY_SWITCH_HOME=C:\Users\you\path-under-home to use an existing any-switch home",
-        "without ANY_SWITCH_HOME, a temporary any-switch home is created and removed",
+        "set HA_SWITCH_BIN=C:\path\to\ha-switch.exe to test a packaged binary",
+        "set HA_SWITCH_HOME=C:\Users\you\path-under-home to use an existing ha-switch home",
+        "without HA_SWITCH_HOME, a temporary ha-switch home is created and removed",
         "refuses to overwrite an existing evidence file"
     )
     foreach ($line in $lines) {
@@ -43,19 +43,19 @@ if (Test-Path -LiteralPath $Output) {
     exit 2
 }
 
-$anySwitch = $env:ANY_SWITCH_BIN
+$anySwitch = $env:HA_SWITCH_BIN
 if ([string]::IsNullOrWhiteSpace($anySwitch)) {
-    $packagedBinary = Join-Path (Split-Path -Parent $PSScriptRoot) "any-switch.exe"
+    $packagedBinary = Join-Path (Split-Path -Parent $PSScriptRoot) "ha-switch.exe"
     if (Test-Path -LiteralPath $packagedBinary) {
         $anySwitch = $packagedBinary
     } else {
-        $anySwitch = "any-switch.exe"
+        $anySwitch = "ha-switch.exe"
     }
 }
 
 $command = Get-Command $anySwitch -ErrorAction SilentlyContinue
 if ($null -eq $command -and -not (Test-Path -LiteralPath $anySwitch)) {
-    Write-Error "any-switch binary not found: $anySwitch"
+    Write-Error "ha-switch binary not found: $anySwitch"
     Show-Usage -ErrorStream
     exit 2
 }
@@ -103,18 +103,18 @@ function Add-Section {
 
 $temporarySwitchHome = ""
 $switchHomeNote = "provided by environment"
-if ([string]::IsNullOrWhiteSpace($env:ANY_SWITCH_HOME)) {
+if ([string]::IsNullOrWhiteSpace($env:HA_SWITCH_HOME)) {
     $homeDir = $env:USERPROFILE
     if ([string]::IsNullOrWhiteSpace($homeDir)) {
         $homeDir = $env:HOME
     }
     if ([string]::IsNullOrWhiteSpace($homeDir)) {
-        Write-Error "USERPROFILE or HOME is required when ANY_SWITCH_HOME is not set"
+        Write-Error "USERPROFILE or HOME is required when HA_SWITCH_HOME is not set"
         exit 2
     }
-    $temporarySwitchHome = Join-Path $homeDir ".any-switch-manual-evidence-$timestamp-$PID"
+    $temporarySwitchHome = Join-Path $homeDir ".ha-switch-manual-evidence-$timestamp-$PID"
     New-Item -ItemType Directory -Path $temporarySwitchHome -Force | Out-Null
-    $env:ANY_SWITCH_HOME = $temporarySwitchHome
+    $env:HA_SWITCH_HOME = $temporarySwitchHome
     $switchHomeNote = "temporary; removed when this script exits"
 }
 
@@ -131,12 +131,12 @@ try {
     Add-Content -LiteralPath $Output -Value "- Operator:"
     Add-Content -LiteralPath $Output -Value "- OS and version:"
     Add-Content -LiteralPath $Output -Value "- CPU architecture: $env:PROCESSOR_ARCHITECTURE"
-    Add-Content -LiteralPath $Output -Value "- ``any-switch --version``:"
+    Add-Content -LiteralPath $Output -Value "- ``ha-switch --version``:"
     Add-Content -LiteralPath $Output -Value "- Git commit:"
     Add-Content -LiteralPath $Output -Value "- Claude Code version:"
     Add-Content -LiteralPath $Output -Value "- Codex CLI version:"
-    Add-Content -LiteralPath $Output -Value "- ``ANY_SWITCH_HOME`` used: $env:ANY_SWITCH_HOME"
-    Add-Content -LiteralPath $Output -Value "- ``ANY_SWITCH_HOME`` note: $switchHomeNote"
+    Add-Content -LiteralPath $Output -Value "- ``HA_SWITCH_HOME`` used: $env:HA_SWITCH_HOME"
+    Add-Content -LiteralPath $Output -Value "- ``HA_SWITCH_HOME`` note: $switchHomeNote"
 
     Add-Content -LiteralPath $Output -Value ""
     Add-Content -LiteralPath $Output -Value "## PowerShell Version"
@@ -145,9 +145,9 @@ try {
     Add-Content -LiteralPath $Output -Value ($PSVersionTable | Out-String).TrimEnd()
     Add-Content -LiteralPath $Output -Value '```'
 
-    Add-Section "any-switch Version" $anySwitch @("--version")
-    Add-Section "any-switch Apps" $anySwitch @("apps")
-    Add-Section "any-switch Doctor" $anySwitch @("doctor")
+    Add-Section "ha-switch Version" $anySwitch @("--version")
+    Add-Section "ha-switch Apps" $anySwitch @("apps")
+    Add-Section "ha-switch Doctor" $anySwitch @("doctor")
     Add-Section "Claude Doctor" $anySwitch @("doctor", "claude")
     Add-Section "Claude Status JSON" $anySwitch @("status", "claude", "--json")
     Add-Section "Codex Doctor" $anySwitch @("doctor", "codex")
@@ -198,10 +198,10 @@ deferred item is still pending, failed, or skipped.
 ## Item 2: Claude OAuth Import On macOS
 
 - [ ] Claude Code fully quit before OAuth commands.
-- [ ] `any-switch doctor claude` showed no Claude process rows, or only a documented process-probe warning unrelated to a running Claude app.
-- [ ] `any-switch import-current claude manual-macos --kind oauth_capture` succeeded.
-- [ ] `any-switch show claude-manual-macos` showed `oauth_capture` and required identity fields.
-- [ ] `any-switch status claude` reported `matched`.
+- [ ] `ha-switch doctor claude` showed no Claude process rows, or only a documented process-probe warning unrelated to a running Claude app.
+- [ ] `ha-switch import-current claude manual-macos --kind oauth_capture` succeeded.
+- [ ] `ha-switch show claude-manual-macos` showed `oauth_capture` and required identity fields.
+- [ ] `ha-switch status claude` reported `matched`.
 
 Evidence:
 
@@ -219,7 +219,7 @@ follow-up tracking current in ``docs/evidence-followups.md``.
 
 - [ ] Capture hashes recorded before Claude Code refresh.
 - [ ] Claude Code used long enough to trigger refresh, then quit.
-- [ ] `any-switch use claude-manual-macos` was confirmed by typing `yes`, then completed or failed with the expected safety error.
+- [ ] `ha-switch use claude-manual-macos` was confirmed by typing `yes`, then completed or failed with the expected safety error.
 - [ ] Capture hash / manifest behavior recorded.
 
 Conclusion:
@@ -234,7 +234,7 @@ write observed rotation behavior here
 - [ ] Only one side was modified.
 - [ ] Claude Code startup behavior recorded.
 - [ ] External backups restored.
-- [ ] `any-switch import-current claude ... --kind oauth_capture` behavior recorded.
+- [ ] `ha-switch import-current claude ... --kind oauth_capture` behavior recorded.
 
 Conclusion:
 
@@ -257,9 +257,9 @@ write sampled JSON behavior here
 ## Item 3: Claude OAuth Import On Linux
 
 - [ ] Claude Code fully stopped.
-- [ ] `any-switch import-current claude manual-linux --kind oauth_capture` succeeded.
-- [ ] `any-switch show claude-manual-linux` showed `oauth_capture` and required identity fields.
-- [ ] `any-switch status claude` reported `matched`.
+- [ ] `ha-switch import-current claude manual-linux --kind oauth_capture` succeeded.
+- [ ] `ha-switch show claude-manual-linux` showed `oauth_capture` and required identity fields.
+- [ ] `ha-switch status claude` reported `matched`.
 - [ ] `captures/claude-manual-linux/credentials.json` and `manifest.json` existed.
 
 Evidence:
@@ -286,10 +286,10 @@ paste redacted command output and app-visible observations here
 ## Windows Release Smoke Test
 
 - [ ] Windows archive checksum verified.
-- [ ] Archive extracted and contained `any-switch.exe`.
-- [ ] `any-switch.exe --version` succeeded.
-- [ ] `any-switch.exe apps` succeeded.
-- [ ] `any-switch.exe doctor` succeeded without packaging/startup failure.
+- [ ] Archive extracted and contained `ha-switch.exe`.
+- [ ] `ha-switch.exe --version` succeeded.
+- [ ] `ha-switch.exe apps` succeeded.
+- [ ] `ha-switch.exe doctor` succeeded without packaging/startup failure.
 
 Evidence:
 
@@ -300,10 +300,10 @@ paste redacted command output here
 ## Preflight E: Codex External Restore Flow
 
 - [ ] Initial Codex profile imported.
-- [ ] Codex auth changed outside any-switch.
-- [ ] Intended state restored outside any-switch.
-- [ ] `any-switch import-current codex manual-codex-refresh --kind auto` succeeded.
-- [ ] `any-switch status codex` reported the expected state.
+- [ ] Codex auth changed outside ha-switch.
+- [ ] Intended state restored outside ha-switch.
+- [ ] `ha-switch import-current codex manual-codex-refresh --kind auto` succeeded.
+- [ ] `ha-switch status codex` reported the expected state.
 
 Conclusion:
 

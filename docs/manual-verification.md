@@ -17,20 +17,20 @@ release when the current-stage macOS Claude OAuth import blocker is passed and
 deferred follow-up evidence has tracking. Do not claim full section 13 coverage
 while any deferred item is still pending.
 
-Use a dedicated test account and a temporary any-switch home:
+Use a dedicated test account and a temporary ha-switch home:
 
 ```bash
-export ANY_SWITCH_HOME="$HOME/.any-switch-manual-verify"
-any-switch doctor
+export HA_SWITCH_HOME="$HOME/.ha-switch-manual-verify"
+ha-switch doctor
 ```
 
-Record the operating system, target app versions, `any-switch --version`, and
+Record the operating system, target app versions, `ha-switch --version`, and
 the exact command output snippets needed to prove each item.
 
 To initialize an evidence file with read-only diagnostics, run:
 
 ```bash
-ANY_SWITCH_BIN=target/release/any-switch \
+HA_SWITCH_BIN=target/release/ha-switch \
   scripts/manual-evidence.sh manual-evidence-$(date -u +%Y%m%dT%H%M%SZ).md
 ```
 
@@ -38,11 +38,11 @@ The generated file does not perform imports, switches, restores, or any other
 write operation. It captures environment and `doctor` / `status` output as a
 starting point, with email addresses, UUID-like identifiers, and common JSON
 identity names, and Keychain account labels redacted; the script refuses to
-overwrite an existing evidence file. If `ANY_SWITCH_HOME` is not set, the script
-uses a temporary any-switch home under the current user's home directory and
-removes it on exit, so it does not initialize `~/.any-switch`.
-Set `ANY_SWITCH_HOME` explicitly when you want the diagnostics to inspect an
-existing any-switch state directory. The real app experiments below still
+overwrite an existing evidence file. If `HA_SWITCH_HOME` is not set, the script
+uses a temporary ha-switch home under the current user's home directory and
+removes it on exit, so it does not initialize `~/.ha-switch`.
+Set `HA_SWITCH_HOME` explicitly when you want the diagnostics to inspect an
+existing ha-switch state directory. The real app experiments below still
 require manual execution and review.
 
 Files named `manual-evidence-*.md` are ignored by Git to reduce accidental
@@ -60,14 +60,14 @@ Prerequisites:
 
 - macOS with Claude Code installed.
 - Claude Code is logged in with OAuth.
-- Claude Code is fully quit before each `any-switch` OAuth command.
+- Claude Code is fully quit before each `ha-switch` OAuth command.
 
 Current-stage blocker steps:
 
 1. Confirm Claude Code is not running:
 
    ```bash
-   any-switch doctor claude
+   ha-switch doctor claude
    ```
 
    Passing evidence: no `process` rows for Claude.
@@ -75,9 +75,9 @@ Current-stage blocker steps:
 2. Import the current OAuth state:
 
    ```bash
-   any-switch import-current claude manual-macos --kind oauth_capture
-   any-switch show claude-manual-macos
-   any-switch status claude
+   ha-switch import-current claude manual-macos --kind oauth_capture
+   ha-switch show claude-manual-macos
+   ha-switch status claude
    ```
 
    Passing evidence: profile kind is `oauth_capture`, required identity fields
@@ -90,7 +90,7 @@ Deferred full-coverage experiments:
    - Save hashes of `captures/claude-manual-macos/*` and `manifest.json`.
    - Start Claude Code and use it long enough to trigger token refresh.
    - Quit Claude Code.
-   - Run `any-switch use claude-manual-macos` and confirm by typing `yes`.
+   - Run `ha-switch use claude-manual-macos` and confirm by typing `yes`.
    - Compare capture hashes and `manifest.json`.
 
    Passing evidence: writeback either records new bytes safely or proves the
@@ -102,10 +102,10 @@ Deferred full-coverage experiments:
    - Modify only one side, leaving the other unchanged.
    - Start Claude Code and record whether it auto-corrects, shows stale UI, or
      fails.
-   - Restore the external backup, then re-run `any-switch import-current`.
+   - Restore the external backup, then re-run `ha-switch import-current`.
 
    Passing evidence: observed behavior is recorded and does not contradict the
-   source-consistency checks in `any-switch status` / `any-switch use`.
+   source-consistency checks in `ha-switch status` / `ha-switch use`.
 
 5. Runtime JSON sampling:
 
@@ -116,7 +116,7 @@ Deferred full-coverage experiments:
      width, trailing newline behavior, and top-level key order.
 
    Passing evidence: the sampled format is compatible with the JSON
-   preservation behavior implemented by any-switch, or a follow-up issue exists
+   preservation behavior implemented by ha-switch, or a follow-up issue exists
    for any mismatch.
 
 ## Claude OAuth Import On Linux
@@ -133,16 +133,16 @@ Steps:
 1. Import the current OAuth state:
 
    ```bash
-   any-switch import-current claude manual-linux --kind oauth_capture
-   any-switch show claude-manual-linux
-   any-switch status claude
+   ha-switch import-current claude manual-linux --kind oauth_capture
+   ha-switch show claude-manual-linux
+   ha-switch status claude
    ```
 
 2. Verify the capture directory contains the current-platform credential file
    and `manifest.json`:
 
    ```bash
-   find "$ANY_SWITCH_HOME/captures/claude-manual-linux" -maxdepth 1 -type f -print
+   find "$HA_SWITCH_HOME/captures/claude-manual-linux" -maxdepth 1 -type f -print
    ```
 
 Passing evidence: required identity fields are present, current-platform capture
@@ -162,8 +162,8 @@ Steps:
 3. Switch to profile A:
 
    ```bash
-   any-switch use <profile-a>
-   any-switch status <app>
+   ha-switch use <profile-a>
+   ha-switch status <app>
    ```
 
 4. Confirm the switch by typing `yes`, then start the app and verify the visible
@@ -184,7 +184,7 @@ Windows Claude credentials behavior is confirmed separately.
 Prerequisites:
 
 - Windows x86_64 machine or runner.
-- Downloaded `any-switch-<tag>-x86_64-pc-windows-msvc.tar.gz` and matching
+- Downloaded `ha-switch-<tag>-x86_64-pc-windows-msvc.tar.gz` and matching
   `.sha256` file from the GitHub Release.
 
 Steps:
@@ -192,7 +192,7 @@ Steps:
 1. Verify the checksum:
 
    ```powershell
-   $archive = ".\any-switch-<tag>-x86_64-pc-windows-msvc.tar.gz"
+   $archive = ".\ha-switch-<tag>-x86_64-pc-windows-msvc.tar.gz"
    $expected = ((Get-Content "${archive}.sha256") -split "\s+")[0].ToLowerInvariant()
    $actual = (Get-FileHash $archive -Algorithm SHA256).Hash.ToLowerInvariant()
    if ($actual -ne $expected) { throw "checksum mismatch" }
@@ -201,22 +201,22 @@ Steps:
 2. Extract the archive:
 
    ```powershell
-   tar -xzf .\any-switch-<tag>-x86_64-pc-windows-msvc.tar.gz
+   tar -xzf .\ha-switch-<tag>-x86_64-pc-windows-msvc.tar.gz
    ```
 
 3. Run:
 
    ```powershell
-   .\any-switch-<tag>-x86_64-pc-windows-msvc\any-switch.exe --version
-   .\any-switch-<tag>-x86_64-pc-windows-msvc\any-switch.exe apps
-   .\any-switch-<tag>-x86_64-pc-windows-msvc\any-switch.exe doctor
+   .\ha-switch-<tag>-x86_64-pc-windows-msvc\ha-switch.exe --version
+   .\ha-switch-<tag>-x86_64-pc-windows-msvc\ha-switch.exe apps
+   .\ha-switch-<tag>-x86_64-pc-windows-msvc\ha-switch.exe doctor
    ```
 
 4. Optional: initialize a redacted evidence file from the extracted archive:
 
    ```powershell
    powershell -NoProfile -ExecutionPolicy Bypass -File `
-     .\any-switch-<tag>-x86_64-pc-windows-msvc\scripts\manual-evidence.ps1 `
+     .\ha-switch-<tag>-x86_64-pc-windows-msvc\scripts\manual-evidence.ps1 `
      manual-evidence-<tag>-windows.md
    ```
 
@@ -237,18 +237,18 @@ Steps:
 1. Import a Codex OAuth or API-key profile:
 
    ```bash
-   any-switch import-current codex manual-codex --kind auto
+   ha-switch import-current codex manual-codex --kind auto
    ```
 
-2. Change Codex authentication outside any-switch, then restore the intended
-   state outside any-switch as a user would.
+2. Change Codex authentication outside ha-switch, then restore the intended
+   state outside ha-switch as a user would.
 3. Run import-current again:
 
    ```bash
-   any-switch import-current codex manual-codex-refresh --kind auto
-   any-switch status codex
+   ha-switch import-current codex manual-codex-refresh --kind auto
+   ha-switch status codex
    ```
 
-Passing evidence: any-switch either updates the matching profile by required
+Passing evidence: ha-switch either updates the matching profile by required
 identity or creates a new profile for a genuinely different identity, and
 `status` reports the expected state.

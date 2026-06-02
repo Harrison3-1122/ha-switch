@@ -33,14 +33,14 @@ of relying on the temporary `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24` runtime
 override. CI uses per-ref concurrency and cancels stale duplicate runs; release
 uses per-tag concurrency without cancellation so duplicate tag events cannot
 race publishing. The Windows CI package smoke verifies that the archive contains
-`any-switch.exe`. The release workflow repeats the same
+`ha-switch.exe`. The release workflow repeats the same
 gate before building tarballs, and first verifies that the pushed tag equals
 `v<Cargo.toml package version>`. Each build matrix branch uploads workflow
 artifacts only; a separate publish job waits for all targets, verifies every
 expected tarball and checksum is present, and then uploads the complete set to
 the GitHub Release. The Windows release matrix branch also runs the Windows
 target Clippy, smoke tests, and evidence helper check before packaging
-`any-switch.exe`.
+`ha-switch.exe`.
 Release archives are produced by `scripts/package-release.sh`;
 `release_workflow_uploads_documented_binary_artifacts` verifies that tag builds
 produce Linux x86_64, macOS x86_64, macOS arm64, and Windows x86_64 tarballs
@@ -51,11 +51,11 @@ exercises the package script locally and verifies the archive contents,
 including the user guide, read-only copies of the built-in App Definitions for
 audit, and the manual evidence helper scripts. It also verifies that packaging
 does not leave hidden staging directories behind, extracts the archive, runs the
-packaged `any-switch --version` binary, runs
+packaged `ha-switch --version` binary, runs
 `scripts/manual-evidence.sh --help`, checks the packaged PowerShell evidence
 helper wiring, and generates a redacted evidence file against the packaged
 binary while verifying that the shell helper removes its temporary
-`ANY_SWITCH_HOME`.
+`HA_SWITCH_HOME`.
 
 ## Section 13 Criteria
 
@@ -124,11 +124,11 @@ is a macOS-evidenced stage release.
 | A-macOS | Deferred | Claude refresh token rotation experiment on macOS: capture before/after refresh and verify whether old captures remain usable. |
 | B-macOS | Deferred | Claude Keychain / `oauthAccount` mismatch experiment on macOS: modify only one source and record Claude Code startup behavior. |
 | C-macOS | Deferred | Claude runtime write-frequency and JSON-format sampling for `~/.claude.json` on macOS. |
-| E-macOS | Deferred | Codex external restore flow on macOS: restore state outside any-switch, then confirm `import-current` captures or refreshes the intended profile. |
+| E-macOS | Deferred | Codex external restore flow on macOS: restore state outside ha-switch, then confirm `import-current` captures or refreshes the intended profile. |
 | 3 | Deferred | Real Linux Claude OAuth import from `${CLAUDE_CONFIG_DIR:-~/.claude}/.credentials.json` plus `~/.claude.json`. |
 | 5-Linux | Deferred | Restart relevant apps after switching profiles on Linux for each Linux-supported built-in app/profile kind, then confirm the active account/provider/model matches the selected profile. |
 | 5-Windows | Deferred | Restart relevant apps after switching profiles on Windows for each Windows-supported built-in app/profile kind, then confirm the active account/provider/model matches the selected profile. Windows Claude OAuth capture is not required until the built-in Definition enables that source. |
-| W | Deferred | Windows release smoke: verify checksum, extract `x86_64-pc-windows-msvc` archive, and run `any-switch.exe --version`, `apps`, and `doctor`; this covers release packaging and startup, not Windows Credential Manager or Claude Windows OAuth capture support. |
+| W | Deferred | Windows release smoke: verify checksum, extract `x86_64-pc-windows-msvc` archive, and run `ha-switch.exe --version`, `apps`, and `doctor`; this covers release packaging and startup, not Windows Credential Manager or Claude Windows OAuth capture support. |
 
 Item D is already recorded in `docs/design.md` as the Codex CLI 0.133.0
 file-backed `auth.json` schema observation.

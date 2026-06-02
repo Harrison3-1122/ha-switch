@@ -5,6 +5,7 @@ use crate::app_definitions::{
 };
 use crate::backup;
 use crate::capture::{self, CaptureSourceSpec, CaptureSpec};
+use crate::codex_history::{self, MigrationOptions};
 use crate::handlers;
 use crate::identity;
 use crate::lock::{self, FileLock};
@@ -33,10 +34,10 @@ use std::process::Command as ProcessCommand;
 
 #[derive(Debug, Parser)]
 #[command(
-    name = "any-switch",
+    name = "ha-switch",
     version,
     about = "Switch local app profiles and state",
-    long_about = "Switch local app profiles and state through declarative app definitions.\n\nany-switch is not limited to the bundled tools: it can manage any local software state that can be described as files, JSON/TOML subtrees, environment fragments, keychain entries, and similar targets. The current built-in definitions focus on Claude Code and Codex because they cover the hardest credential/state cases first.\n\nCommon flows:\n  any-switch apps\n  any-switch import-current <app> personal\n  any-switch list\n  any-switch use <profile-id> --dry-run\n  any-switch use <profile-id>\n  any-switch status <app>\n  any-switch doctor\n\nBuilt-in examples:\n  any-switch import-current codex personal\n  any-switch import-current claude work --kind oauth_capture\n  any-switch use claude-work\n\nSafety flags:\n  --yes confirms high-risk writes in scripts or other non-interactive runs; interactive terminals may omit it and type yes at the prompt instead.\n  --allow-running is only for non-OAuth/static writes where live edits are acceptable.\n  --assume-app-stopped is only for OAuth/process-sensitive operations when process detection is a false positive, and needs --yes or an interactive yes prompt."
+    long_about = "Switch local app profiles and state through declarative app definitions.\n\nha-switch is not limited to the bundled tools: it can manage any local software state that can be described as files, JSON/TOML subtrees, environment fragments, keychain entries, and similar targets. The current built-in definitions focus on Claude Code and Codex because they cover the hardest credential/state cases first.\n\nCommon flows:\n  ha-switch apps\n  ha-switch import-current <app> personal\n  ha-switch list\n  ha-switch use <profile-id> --dry-run\n  ha-switch use <profile-id>\n  ha-switch status <app>\n  ha-switch doctor\n\nBuilt-in examples:\n  ha-switch import-current codex personal\n  ha-switch import-current claude work --kind oauth_capture\n  ha-switch use claude-work\n\nSafety flags:\n  --yes confirms high-risk writes in scripts or other non-interactive runs; interactive terminals may omit it and type yes at the prompt instead.\n  --allow-running is only for non-OAuth/static writes where live edits are acceptable.\n  --assume-app-stopped is only for OAuth/process-sensitive operations when process detection is a false positive, and needs --yes or an interactive yes prompt."
 )]
 pub struct Cli {
     #[command(subcommand)]
@@ -46,8 +47,17 @@ pub struct Cli {
 #[derive(Debug, Subcommand)]
 enum Command {
     #[command(
+        name = "codex-history",
+        about = "Inspect or migrate shared Codex conversation history",
+        long_about = "Inspect or migrate shared Codex conversation history.\n\nCodex profile switching in ha-switch manages auth.json and selected config.toml fields only. Conversation history is shared Codex state under CODEX_HOME and is not captured, backed up, restored, or deleted during profile switching."
+    )]
+    CodexHistory {
+        #[command(subcommand)]
+        command: CodexHistoryCommand,
+    },
+    #[command(
         about = "Inspect and validate app definitions",
-        long_about = "Inspect and validate app definitions.\n\nApp definitions describe which local files, structured subtrees, secrets, and safety checks any-switch can manage for an app. Built-in definitions are bundled with the binary; user definitions and overrides can extend supported apps without hard-coding them into commands."
+        long_about = "Inspect and validate app definitions.\n\nApp definitions describe which local files, structured subtrees, secrets, and safety checks ha-switch can manage for an app. Built-in definitions are bundled with the binary; user definitions and overrides can extend supported apps without hard-coding them into commands."
     )]
     Apps {
         #[command(subcommand)]
@@ -69,7 +79,7 @@ enum Command {
     },
     #[command(
         about = "Add a static profile from explicit fields",
-        long_about = "Add a static profile from explicit fields.\n\nUse this for profile kinds whose values can be described directly as fields, such as API-key files, environment fragments, endpoint settings, model/provider selections, or other definition-declared static state. OAuth/dynamic credential profiles should normally be created with import-current instead. Field names come from the selected app definition and profile kind.\n\nSecret fields use @prompt, @stdin, @env:NAME, or @file:PATH so secret values do not have to appear in shell history or process arguments.\n\nExamples:\n  any-switch add <app> work --kind <kind> --field key=value\n  any-switch add codex openai --kind file_template --secret-field api_key=@prompt --field model=gpt-5-codex\n  any-switch add claude glm --kind env_injection --field base_url=https://example.test --secret-field auth_token=@env:ANTHROPIC_AUTH_TOKEN"
+        long_about = "Add a static profile from explicit fields.\n\nUse this for profile kinds whose values can be described directly as fields, such as API-key files, environment fragments, endpoint settings, model/provider selections, or other definition-declared static state. OAuth/dynamic credential profiles should normally be created with import-current instead. Field names come from the selected app definition and profile kind.\n\nSecret fields use @prompt, @stdin, @env:NAME, or @file:PATH so secret values do not have to appear in shell history or process arguments.\n\nExamples:\n  ha-switch add <app> work --kind <kind> --field key=value\n  ha-switch add codex openai --kind file_template --secret-field api_key=@prompt --field model=gpt-5-codex\n  ha-switch add claude glm --kind env_injection --field base_url=https://example.test --secret-field auth_token=@env:ANTHROPIC_AUTH_TOKEN"
     )]
     Add(AddArgs),
     #[command(about = "Edit a profile in $VISUAL, $EDITOR, or the platform default editor")]
@@ -79,14 +89,14 @@ enum Command {
     },
     #[command(
         about = "Switch to a profile",
-        long_about = "Switch to a profile.\n\nFor OAuth profiles, any currently active OAuth profile is written back first, but only if the live identity still matches the active profile. If it does not match, the command stops with DriftBeforeWriteback so the wrong live credentials are not saved into the old profile.\n\nExamples:\n  any-switch use <profile-id> --dry-run\n  any-switch use <profile-id>\n  any-switch detach <app>\n  any-switch use codex-personal\n  any-switch use claude-work",
-        after_help = "Next-step hints:\n  DriftBeforeWriteback: run `any-switch status <app>` to inspect drift. If you want to discard the current live state, run `any-switch detach <app>` and then retry `any-switch use <id>`.\n  AppRunning on process-sensitive/OAuth profiles: close the app and retry. Use `--assume-app-stopped` only when the process probe is a false positive; confirm with `--yes` or the interactive prompt.\n  AppRunning on static profiles: close the app, or retry with `--allow-running` if editing live config is acceptable."
+        long_about = "Switch to a profile.\n\nFor OAuth profiles, any currently active OAuth profile is written back first, but only if the live identity still matches the active profile. If it does not match, the command stops with DriftBeforeWriteback so the wrong live credentials are not saved into the old profile.\n\nExamples:\n  ha-switch use <profile-id> --dry-run\n  ha-switch use <profile-id>\n  ha-switch detach <app>\n  ha-switch use codex-personal\n  ha-switch use claude-work",
+        after_help = "Next-step hints:\n  DriftBeforeWriteback: run `ha-switch status <app>` to inspect drift. If you want to discard the current live state, run `ha-switch detach <app>` and then retry `ha-switch use <id>`.\n  AppRunning on process-sensitive/OAuth profiles: close the app and retry. Use `--assume-app-stopped` only when the process probe is a false positive; confirm with `--yes` or the interactive prompt.\n  AppRunning on static profiles: close the app, or retry with `--allow-running` if editing live config is acceptable."
     )]
     Use(UseArgs),
     #[command(
         about = "Compare live app state with active profiles",
-        long_about = "Compare live app state with active profiles.\n\nstatus reads the app's managed targets and reports whether they match the profile recorded as active in any-switch state. It does not modify profiles, captures, backups, or live app files.\n\nTypical states:\n  matched: live state matches the active profile.\n  matched-with-overrides: managed state matches, but a higher-priority runtime override may change what the app actually uses.\n  drifted: live state no longer matches the active profile.\n  missing: expected live target files or capture blobs are absent.\n  no-active: any-switch is not currently tracking an active profile for the app.\n\nExamples:\n  any-switch status\n  any-switch status <app>\n  any-switch status codex --json",
-        after_help = "Next-step hints:\n  drifted: run `any-switch doctor <app>` for details. For process-sensitive/OAuth profiles, import the live state if it is valuable, or `detach` before overwriting it with another profile.\n  no-active: run `any-switch import-current <app> <name>` to capture the current state, or `any-switch use <profile-id>` to apply an existing profile."
+        long_about = "Compare live app state with active profiles.\n\nstatus reads the app's managed targets and reports whether they match the profile recorded as active in ha-switch state. It does not modify profiles, captures, backups, or live app files.\n\nTypical states:\n  matched: live state matches the active profile.\n  matched-with-overrides: managed state matches, but a higher-priority runtime override may change what the app actually uses.\n  drifted: live state no longer matches the active profile.\n  missing: expected live target files or capture blobs are absent.\n  no-active: ha-switch is not currently tracking an active profile for the app.\n\nExamples:\n  ha-switch status\n  ha-switch status <app>\n  ha-switch status codex --json",
+        after_help = "Next-step hints:\n  drifted: run `ha-switch doctor <app>` for details. For process-sensitive/OAuth profiles, import the live state if it is valuable, or `detach` before overwriting it with another profile.\n  no-active: run `ha-switch import-current <app> <name>` to capture the current state, or `ha-switch use <profile-id>` to apply an existing profile."
     )]
     Status {
         #[arg(help = "Optional app id to inspect")]
@@ -97,7 +107,7 @@ enum Command {
     #[command(
         about = "List defensive backups created before writes",
         long_about = "List defensive backups created before writes.\n\nBackups are created automatically before `use` and `restore-target` overwrite managed live state. They are not profiles and do not change which profile is active. Use `restore-target` when you need to recover live files, structured subtrees, or keychain entries from one backup.",
-        after_help = "Examples:\n  any-switch backup list\n  any-switch backup list <app>\n  any-switch backup list codex --json\n  any-switch restore-target <app> <backup-id>"
+        after_help = "Examples:\n  ha-switch backup list\n  ha-switch backup list <app>\n  ha-switch backup list codex --json\n  ha-switch restore-target <app> <backup-id>"
     )]
     Backup {
         #[command(subcommand)]
@@ -106,12 +116,12 @@ enum Command {
     #[command(
         about = "Restore live targets from a defensive backup",
         long_about = "Restore live targets from a defensive backup.\n\nrestore-target writes the target files, structured subtrees, or keychain entries recorded in a backup manifest. It does not mark any profile active, so `status` may report `drifted` or `no-active` afterwards; use it when you need to recover local app state rather than switch to a profile.",
-        after_help = "Examples:\n  any-switch backup list <app>\n  any-switch restore-target <app> <backup-id>\n\nNext-step hints:\n  After restore, run `any-switch status <app>` to inspect whether the restored live state matches the active profile.\n  Process-sensitive/OAuth backups require the app to be stopped. If the probe is a false positive, retry with `--assume-app-stopped` and confirm with `--yes` or the interactive prompt.\n  `--allow-running` only applies to non-OAuth/static targets."
+        after_help = "Examples:\n  ha-switch backup list <app>\n  ha-switch restore-target <app> <backup-id>\n\nNext-step hints:\n  After restore, run `ha-switch status <app>` to inspect whether the restored live state matches the active profile.\n  Process-sensitive/OAuth backups require the app to be stopped. If the probe is a false positive, retry with `--assume-app-stopped` and confirm with `--yes` or the interactive prompt.\n  `--allow-running` only applies to non-OAuth/static targets."
     )]
     RestoreTarget {
         #[arg(help = "App id whose target should be restored")]
         app: String,
-        #[arg(help = "Backup id from `any-switch backup list <app>`")]
+        #[arg(help = "Backup id from `ha-switch backup list <app>`")]
         backup_id: String,
         #[arg(
             long,
@@ -132,8 +142,8 @@ enum Command {
     },
     #[command(
         about = "Remove a profile and its managed capture files",
-        long_about = "Remove a profile and its managed capture files.\n\nremove deletes the profile from any-switch state and deletes any capture blobs owned by that profile. It does not clear, restore, or rewrite the target app's current live files or credentials. If the removed profile is currently active, the app is detached and `status` will report `no-active` until you import or use another profile.",
-        after_help = "Examples:\n  any-switch remove <profile-id>\n  any-switch remove codex-old\n\nNext-step hints:\n  To change live app state before removing a profile, run `any-switch use <profile-id>` or `any-switch restore-target <app> <backup-id>` first."
+        long_about = "Remove a profile and its managed capture files.\n\nremove deletes the profile from ha-switch state and deletes any capture blobs owned by that profile. It does not clear, restore, or rewrite the target app's current live files or credentials. If the removed profile is currently active, the app is detached and `status` will report `no-active` until you import or use another profile.",
+        after_help = "Examples:\n  ha-switch remove <profile-id>\n  ha-switch remove codex-old\n\nNext-step hints:\n  To change live app state before removing a profile, run `ha-switch use <profile-id>` or `ha-switch restore-target <app> <backup-id>` first."
     )]
     Remove {
         #[arg(help = "Profile id to remove")]
@@ -143,8 +153,8 @@ enum Command {
     },
     #[command(
         about = "Clear the active profile for an app without touching live files",
-        long_about = "Clear the active profile for an app without touching live files.\n\nUse this when live state has drifted and you do not want any-switch to write it back into the currently recorded profile. The recommended next step is `any-switch import-current <app> <name>` to capture the current live state. `any-switch use <profile-id>` remains allowed, but it will overwrite live state with the selected profile without first writing the current state back.",
-        after_help = "Examples:\n  any-switch detach claude\n  any-switch import-current claude current-state\n\nRollback option:\n  any-switch use <profile-id>\n\nThe rollback option overwrites live state and does not write back first."
+        long_about = "Clear the active profile for an app without touching live files.\n\nUse this when live state has drifted and you do not want ha-switch to write it back into the currently recorded profile. The recommended next step is `ha-switch import-current <app> <name>` to capture the current live state. `ha-switch use <profile-id>` remains allowed, but it will overwrite live state with the selected profile without first writing the current state back.",
+        after_help = "Examples:\n  ha-switch detach claude\n  ha-switch import-current claude current-state\n\nRollback option:\n  ha-switch use <profile-id>\n\nThe rollback option overwrites live state and does not write back first."
     )]
     Detach {
         #[arg(help = "App id to detach")]
@@ -153,7 +163,7 @@ enum Command {
     #[command(
         about = "Inspect app definitions, live state, and local safety warnings",
         long_about = "Inspect app definitions, live state, and local safety warnings.\n\ndoctor is broader than status: it reports definition loading problems, target summaries, process probes, backup usage, permissions, stale captures, known-schema warnings, and local environment risks. It is read-only.",
-        after_help = "Examples:\n  any-switch doctor\n  any-switch doctor <app>\n  any-switch doctor codex --json"
+        after_help = "Examples:\n  ha-switch doctor\n  ha-switch doctor <app>\n  ha-switch doctor codex --json"
     )]
     Doctor {
         #[arg(help = "Optional app id to inspect")]
@@ -162,8 +172,8 @@ enum Command {
         json: bool,
     },
     #[command(
-        about = "Show any-switch configuration paths",
-        after_help = "Examples:\n  any-switch config path\n\n`config path` prints the active profiles.yaml path. Use `any-switch doctor` to see the any-switch home directory, permission checks, and local safety warnings."
+        about = "Show ha-switch configuration paths",
+        after_help = "Examples:\n  ha-switch config path\n\n`config path` prints the active profiles.yaml path. Use `ha-switch doctor` to see the ha-switch home directory, permission checks, and local safety warnings."
     )]
     Config {
         #[command(subcommand)]
@@ -171,8 +181,8 @@ enum Command {
     },
     #[command(
         about = "Import the app's current live state as a profile",
-        long_about = "Import the app's current live state as a profile.\n\nWith --kind auto, any-switch detects one importable state. If multiple states are present, pass --kind explicitly. OAuth imports capture dynamic credential files and require the app to be stopped; static API-key/env imports create editable profiles from live config.",
-        after_help = "Examples:\n  any-switch import-current <app> personal\n  any-switch import-current codex personal\n  any-switch import-current codex work --kind file_template\n  any-switch import-current claude personal --kind oauth_capture\n\nNext-step hints:\n  ImportAmbiguous: pass `--kind <kind>` if multiple valid states are present, or clean up the app's live auth files.\n  IdentityMissing on process-sensitive/OAuth state: the detected credential lacks required identity fields; run `any-switch doctor <app>` and check whether the app is logged in.\n  AppRunning on process-sensitive/OAuth import: close the app and retry. Use `--assume-app-stopped` only for false-positive process probes; confirm with `--yes` or the interactive prompt."
+        long_about = "Import the app's current live state as a profile.\n\nWith --kind auto, ha-switch detects one importable state. If multiple states are present, pass --kind explicitly. OAuth imports capture dynamic credential files and require the app to be stopped; static API-key/env imports create editable profiles from live config.",
+        after_help = "Examples:\n  ha-switch import-current <app> personal\n  ha-switch import-current codex personal\n  ha-switch import-current codex work --kind file_template\n  ha-switch import-current claude personal --kind oauth_capture\n\nNext-step hints:\n  ImportAmbiguous: pass `--kind <kind>` if multiple valid states are present, or clean up the app's live auth files.\n  IdentityMissing on process-sensitive/OAuth state: the detected credential lacks required identity fields; run `ha-switch doctor <app>` and check whether the app is logged in.\n  AppRunning on process-sensitive/OAuth import: close the app and retry. Use `--assume-app-stopped` only for false-positive process probes; confirm with `--yes` or the interactive prompt."
     )]
     ImportCurrent {
         #[arg(help = "App id from an app definition")]
@@ -248,10 +258,32 @@ enum AppsCommand {
 }
 
 #[derive(Debug, Subcommand)]
+enum CodexHistoryCommand {
+    #[command(
+        about = "Merge an old Codex home history into the current Codex home",
+        long_about = "Merge an old Codex home history into the current Codex home.\n\nThis is non-destructive: it appends missing history.jsonl and session_index.jsonl lines, copies missing sessions/ files, skips identical files, and stops on conflicting session files without overwriting them."
+    )]
+    Migrate {
+        #[arg(long, help = "Old Codex home to read from")]
+        from: PathBuf,
+        #[arg(long, help = "Target Codex home; defaults to ${CODEX_HOME:-~/.codex}")]
+        to: Option<PathBuf>,
+        #[arg(long, help = "Show what would be migrated without writing files")]
+        dry_run: bool,
+        #[arg(
+            long,
+            short = 'y',
+            help = "Confirm migration non-interactively; required unless --dry-run is used"
+        )]
+        yes: bool,
+    },
+}
+
+#[derive(Debug, Subcommand)]
 enum BackupCommand {
     #[command(
         about = "List defensive backups",
-        long_about = "List defensive backups.\n\nEach row is a backup id that can be passed to `any-switch restore-target <app> <backup-id>`. Restore operations do not mark a profile active; run `any-switch status <app>` after restore to inspect the live state."
+        long_about = "List defensive backups.\n\nEach row is a backup id that can be passed to `ha-switch restore-target <app> <backup-id>`. Restore operations do not mark a profile active; run `ha-switch status <app>` after restore to inspect the live state."
     )]
     List {
         #[arg(help = "Optional app id to filter by")]
@@ -265,7 +297,7 @@ enum BackupCommand {
 enum ConfigCommand {
     #[command(
         about = "Print the active profiles.yaml path",
-        long_about = "Print the active profiles.yaml path.\n\nThis is the main editable any-switch profile registry. It may be the default ~/.any-switch/profiles.yaml or a path under ANY_SWITCH_HOME when that environment variable is set."
+        long_about = "Print the active profiles.yaml path.\n\nThis is the main editable ha-switch profile registry. It may be the default ~/.ha-switch/profiles.yaml or a path under HA_SWITCH_HOME when that environment variable is set."
     )]
     Path,
 }
@@ -339,6 +371,7 @@ pub fn run() -> Result<()> {
     paths.ensure_layout()?;
 
     match cli.command {
+        Command::CodexHistory { command } => codex_history_command(&paths, command),
         Command::Apps {
             command: Some(AppsCommand::Validate { path: Some(path) }),
         } => validate_app_definition_file(&paths, &path),
@@ -518,6 +551,67 @@ fn apps_command(
             } else {
                 DefinitionRegistry::load(paths)?;
                 println!("ok");
+            }
+            Ok(())
+        }
+    }
+}
+
+fn codex_history_command(paths: &Paths, command: CodexHistoryCommand) -> Result<()> {
+    match command {
+        CodexHistoryCommand::Migrate {
+            from,
+            to,
+            dry_run,
+            yes,
+        } => {
+            if !dry_run && !yes {
+                return Err(anyhow!(
+                    "ConfirmationRequired: pass --dry-run to preview or --yes to migrate Codex history"
+                ));
+            }
+            let to = to.unwrap_or_else(codex_history::default_codex_home);
+            let summary = codex_history::migrate(&MigrationOptions { from, to, dry_run })?;
+            println!(
+                "codex_history\t{}\tfrom={}\tto={}",
+                if summary.dry_run {
+                    "dry-run"
+                } else {
+                    "migrated"
+                },
+                summary.from.display(),
+                summary.to.display()
+            );
+            println!(
+                "jsonl\thistory.jsonl\tadded={}\texisting={}",
+                summary.history_added, summary.history_existing
+            );
+            println!(
+                "jsonl\tsession_index.jsonl\tadded={}\texisting={}",
+                summary.session_index_added, summary.session_index_existing
+            );
+            println!(
+                "sessions\tcopied={}\tskipped={}\tconflicts={}",
+                summary.sessions_copied,
+                summary.sessions_skipped,
+                summary.session_conflicts.len()
+            );
+            if !summary.dry_run {
+                append_history(
+                    paths,
+                    &json!({
+                        "operation_id": uuid::Uuid::now_v7().to_string(),
+                        "time": Utc::now(),
+                        "operation": "codex-history-migrate",
+                        "from": summary.from,
+                        "to": summary.to,
+                        "history_added": summary.history_added,
+                        "session_index_added": summary.session_index_added,
+                        "sessions_copied": summary.sessions_copied,
+                        "sessions_skipped": summary.sessions_skipped,
+                        "ok": true
+                    }),
+                )?;
             }
             Ok(())
         }
@@ -833,7 +927,7 @@ fn import_current_command(
     }
     if drafts.is_empty() {
         return Err(anyhow!(
-            "TargetMissing: no importable current state for {app}\n\nNext steps:\n  - Run `any-switch doctor {app}` to see which live files or credentials are missing.\n  - If the app is not logged in, log in with the app first, then retry import-current.\n  - If this is a static API-key/env profile, use `any-switch add` instead."
+            "TargetMissing: no importable current state for {app}\n\nNext steps:\n  - Run `ha-switch doctor {app}` to see which live files or credentials are missing.\n  - If the app is not logged in, log in with the app first, then retry import-current.\n  - If this is a static API-key/env profile, use `ha-switch add` instead."
         ));
     }
     if drafts.len() > 1 {
@@ -887,7 +981,7 @@ fn import_current_command(
                 &identity,
             )? {
                 return Err(anyhow!(
-                    "IdentityMissing: imported {app} OAuth state is missing required identity fields\n\nNext steps:\n  - Run `any-switch doctor {app}` and check whether the app is logged in.\n  - If this is not an OAuth login, retry with the appropriate `--kind`.\n  - If the app changed its credential format, update the app definition before importing."
+                    "IdentityMissing: imported {app} OAuth state is missing required identity fields\n\nNext steps:\n  - Run `ha-switch doctor {app}` and check whether the app is logged in.\n  - If this is not an OAuth login, retry with the appropriate `--kind`.\n  - If the app changed its credential format, update the app definition before importing."
                 ));
             }
             let capture_value = capture.to_value()?;
@@ -2667,7 +2761,7 @@ fn oauth_stale_warning(paths: &Paths, profile: &Profile, stale_days: u64) -> Res
             "age_days": age_days,
             "threshold_days": stale_days,
             "timestamp": timestamp,
-            "hint": format!("run `any-switch import-current {} <name>` after confirming the target app can still refresh this account", profile.app)
+            "hint": format!("run `ha-switch import-current {} <name>` after confirming the target app can still refresh this account", profile.app)
         })));
     }
     Ok(None)
@@ -2940,7 +3034,7 @@ fn writeback_oauth_profile(
         &live_identity,
     )? {
         return Err(anyhow!(
-            "DriftBeforeWriteback: live identity no longer matches active profile {}\n\nNext steps:\n  - Run `any-switch status {}` to inspect the drift.\n  - If the live state belongs to a new account/profile, run `any-switch import-current {} <name>`.\n  - If you want to discard the current live state and restore a saved profile, run `any-switch detach {}` first, then retry `any-switch use <profile-id>`.",
+            "DriftBeforeWriteback: live identity no longer matches active profile {}\n\nNext steps:\n  - Run `ha-switch status {}` to inspect the drift.\n  - If the live state belongs to a new account/profile, run `ha-switch import-current {} <name>`.\n  - If you want to discard the current live state and restore a saved profile, run `ha-switch detach {}` first, then retry `ha-switch use <profile-id>`.",
             profile.id,
             definition.app.id,
             definition.app.id,
@@ -3625,7 +3719,7 @@ fn doctor_command(
     if json_output {
         return doctor_json_command(paths, registry, app, startup_permission_warnings);
     }
-    println!("any_switch_home\t{}", paths.switch_home.display());
+    println!("ha_switch_home\t{}", paths.switch_home.display());
     println!("profiles_yaml\t{}", paths.profiles_path().display());
     println!(
         "profiles.yaml secret-leak surface\t{}",
@@ -3656,6 +3750,9 @@ fn doctor_command(
     if let Some(app) = app {
         println!("app\t{app}");
         let loaded = registry.get(app)?;
+        if app == "codex" {
+            print_codex_history_doctor();
+        }
         doctor_definition(paths, &loaded.definition)?;
         match process::detect_running(&loaded.definition) {
             Ok(running) if running.is_empty() => println!("processes\tok"),
@@ -3753,7 +3850,7 @@ fn doctor_json_command(
         })
         .collect::<Vec<_>>();
     let mut output = json!({
-        "any_switch_home": paths.switch_home,
+        "ha_switch_home": paths.switch_home,
         "profiles_yaml": paths.profiles_path(),
         "profiles_yaml_secret_leak_surface": cloud_sync_warning(paths),
         "permissions": {
@@ -3794,6 +3891,7 @@ fn doctor_json_command(
         output["app"] = json!({
             "id": app,
             "definition": doctor_definition_records(paths, &loaded.definition)?,
+            "codex_history": (app == "codex").then(codex_history_doctor_record),
             "processes": processes,
             "process_status": process_status,
             "process_warning": process_warning,
@@ -3803,6 +3901,28 @@ fn doctor_json_command(
 
     println!("{}", serde_json::to_string_pretty(&output)?);
     Ok(())
+}
+
+fn print_codex_history_doctor() {
+    let codex_home = codex_history::default_codex_home();
+    println!("codex_home\t{}", codex_home.display());
+    println!(
+        "codex_history\tshared\tprofile switching manages auth.json and selected config.toml fields only; history.jsonl, session_index.jsonl, and sessions/ stay under CODEX_HOME"
+    );
+}
+
+fn codex_history_doctor_record() -> Value {
+    json!({
+        "codex_home": codex_history::default_codex_home(),
+        "status": "shared",
+        "managed_by_profiles": false,
+        "shared_paths": [
+            "history.jsonl",
+            "session_index.jsonl",
+            "sessions/"
+        ],
+        "message": "Codex history is shared state under CODEX_HOME and is not captured, backed up, restored, or deleted during profile switching."
+    })
 }
 
 fn doctor_json_active(
@@ -4641,7 +4761,7 @@ fn backup_manifest_requires_app_stopped(paths: &Paths, app: &str, backup_id: &st
 
 fn no_active_hint(app: &str) -> String {
     format!(
-        "{app}: recommended next step is `any-switch import-current {app} <name>`, not `any-switch use <id>`, because use will not write back live state first and may overwrite it with a stale capture."
+        "{app}: recommended next step is `ha-switch import-current {app} <name>`, not `ha-switch use <id>`, because use will not write back live state first and may overwrite it with a stale capture."
     )
 }
 
@@ -4664,7 +4784,7 @@ fn cloud_sync_warning(paths: &Paths) -> &'static str {
         &["Google Drive"][..],
     ] {
         if path_starts_with_components(relative, marker) {
-            return "warning: ANY_SWITCH_HOME appears to be under a cloud sync directory";
+            return "warning: HA_SWITCH_HOME appears to be under a cloud sync directory";
         }
     }
     "ok"
@@ -4836,7 +4956,7 @@ kinds:
         .unwrap();
         let paths = Paths {
             home: home.path().to_path_buf(),
-            switch_home: home.path().join(".any-switch"),
+            switch_home: home.path().join(".ha-switch"),
         };
         let definition = custom_oauth_definition();
 
@@ -4849,14 +4969,14 @@ kinds:
     #[test]
     fn cloud_sync_warning_matches_only_known_home_roots() {
         let home = tempfile::tempdir().unwrap();
-        let dropbox_switch_home = home.path().join("Dropbox").join(".any-switch");
+        let dropbox_switch_home = home.path().join("Dropbox").join(".ha-switch");
         let icloud_switch_home = home
             .path()
             .join("Library")
             .join("Mobile Documents")
-            .join(".any-switch");
+            .join(".ha-switch");
         let false_positive_switch_home =
-            home.path().join("Work-Dropbox-Archive").join(".any-switch");
+            home.path().join("Work-Dropbox-Archive").join(".ha-switch");
         fs::create_dir_all(&dropbox_switch_home).unwrap();
         fs::create_dir_all(&icloud_switch_home).unwrap();
         fs::create_dir_all(&false_positive_switch_home).unwrap();

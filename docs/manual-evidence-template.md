@@ -7,7 +7,7 @@ You can initialize a local evidence file with `scripts/manual-evidence.sh`, or
 with `scripts/manual-evidence.ps1` on Windows. The scripts only run read-only
 diagnostics and redact email addresses, UUID-like identifiers, and common JSON
 identity names, and Keychain account labels, and they refuse to overwrite an
-existing evidence file. Unless `ANY_SWITCH_HOME` is already set, they use a
+existing evidence file. Unless `HA_SWITCH_HOME` is already set, they use a
 temporary switch home and remove it on exit. Complete the manual experiment sections below afterwards. Generated files named
 `manual-evidence-*.md` are ignored by Git; keep final release evidence in a
 private issue or release checklist unless the project explicitly chooses to
@@ -19,11 +19,11 @@ publish a redacted record.
 - Operator:
 - OS and version:
 - CPU architecture:
-- `any-switch --version`:
+- `ha-switch --version`:
 - Git commit:
 - Claude Code version:
 - Codex CLI version:
-- `ANY_SWITCH_HOME` used:
+- `HA_SWITCH_HOME` used:
 
 ## Local Gate
 
@@ -68,13 +68,13 @@ deferred item is still pending, failed, or skipped.
 ## Item 2: Claude OAuth Import On macOS
 
 - [ ] Claude Code fully quit before OAuth commands.
-- [ ] `any-switch doctor claude` showed no Claude process rows, or only a
+- [ ] `ha-switch doctor claude` showed no Claude process rows, or only a
       documented process-probe warning unrelated to a running Claude app.
-- [ ] `any-switch import-current claude manual-macos --kind oauth_capture`
+- [ ] `ha-switch import-current claude manual-macos --kind oauth_capture`
       succeeded.
-- [ ] `any-switch show claude-manual-macos` showed `oauth_capture` and required
+- [ ] `ha-switch show claude-manual-macos` showed `oauth_capture` and required
       identity fields.
-- [ ] `any-switch status claude` reported `matched`.
+- [ ] `ha-switch status claude` reported `matched`.
 
 Evidence:
 
@@ -92,7 +92,7 @@ follow-up tracking current in `docs/evidence-followups.md`.
 
 - [ ] Capture hashes recorded before Claude Code refresh.
 - [ ] Claude Code used long enough to trigger refresh, then quit.
-- [ ] `any-switch use claude-manual-macos` was confirmed by typing `yes`, then
+- [ ] `ha-switch use claude-manual-macos` was confirmed by typing `yes`, then
       completed or failed with the expected safety error.
 - [ ] Capture hash / manifest behavior recorded.
 
@@ -108,7 +108,7 @@ write observed rotation behavior here
 - [ ] Only one side was modified.
 - [ ] Claude Code startup behavior recorded.
 - [ ] External backups restored.
-- [ ] `any-switch import-current claude ... --kind oauth_capture` behavior
+- [ ] `ha-switch import-current claude ... --kind oauth_capture` behavior
       recorded.
 
 Conclusion:
@@ -133,11 +133,11 @@ write sampled JSON behavior here
 ## Item 3: Claude OAuth Import On Linux
 
 - [ ] Claude Code fully stopped.
-- [ ] `any-switch import-current claude manual-linux --kind oauth_capture`
+- [ ] `ha-switch import-current claude manual-linux --kind oauth_capture`
       succeeded.
-- [ ] `any-switch show claude-manual-linux` showed `oauth_capture` and required
+- [ ] `ha-switch show claude-manual-linux` showed `oauth_capture` and required
       identity fields.
-- [ ] `any-switch status claude` reported `matched`.
+- [ ] `ha-switch status claude` reported `matched`.
 - [ ] `captures/claude-manual-linux/credentials.json` and `manifest.json`
       existed.
 
@@ -165,10 +165,10 @@ paste redacted command output and app-visible observations here
 ## Windows Release Smoke Test
 
 - [ ] Windows archive checksum verified.
-- [ ] Archive extracted and contained `any-switch.exe`.
-- [ ] `any-switch.exe --version` succeeded.
-- [ ] `any-switch.exe apps` succeeded.
-- [ ] `any-switch.exe doctor` succeeded without packaging/startup failure.
+- [ ] Archive extracted and contained `ha-switch.exe`.
+- [ ] `ha-switch.exe --version` succeeded.
+- [ ] `ha-switch.exe apps` succeeded.
+- [ ] `ha-switch.exe doctor` succeeded without packaging/startup failure.
 
 Evidence:
 
@@ -179,11 +179,11 @@ paste redacted command output here
 ## Preflight E: Codex External Restore Flow
 
 - [ ] Initial Codex profile imported.
-- [ ] Codex auth changed outside any-switch.
-- [ ] Intended state restored outside any-switch.
-- [ ] `any-switch import-current codex manual-codex-refresh --kind auto`
+- [ ] Codex auth changed outside ha-switch.
+- [ ] Intended state restored outside ha-switch.
+- [ ] `ha-switch import-current codex manual-codex-refresh --kind auto`
       succeeded.
-- [ ] `any-switch status codex` reported the expected state.
+- [ ] `ha-switch status codex` reported the expected state.
 
 Conclusion:
 

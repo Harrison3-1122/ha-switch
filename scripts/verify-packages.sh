@@ -10,8 +10,8 @@ if [[ -z "${version}" ]]; then
   exit 1
 fi
 
-tmp_root="$(mktemp -d "${TMPDIR:-/tmp}/any-switch-package-verify.XXXXXX")"
-state_root="$(mktemp -d "${HOME}/.any-switch-package-verify.XXXXXX")"
+tmp_root="$(mktemp -d "${TMPDIR:-/tmp}/ha-switch-package-verify.XXXXXX")"
+state_root="$(mktemp -d "${HOME}/.ha-switch-package-verify.XXXXXX")"
 trap 'rm -rf "${tmp_root}" "${state_root}"' EXIT
 
 require_line() {
@@ -42,7 +42,7 @@ require_line "Cargo.lock" "${cargo_package_list}"
 require_line "src/main.rs" "${cargo_package_list}"
 require_line "README.md" "${cargo_package_list}"
 require_line "README.zh-CN.md" "${cargo_package_list}"
-reject_pattern '(^|/)(\.any-switch|\.claude|\.codex|\.smoke-|\.tmp)(/|$)' "${cargo_package_list}"
+reject_pattern '(^|/)(\.ha-switch|\.claude|\.codex|\.smoke-|\.tmp)(/|$)' "${cargo_package_list}"
 reject_pattern '^vendor/' "${cargo_package_list}"
 reject_pattern '^manual-evidence-[^/]*\.md$' "${cargo_package_list}"
 reject_pattern '(^|/)(auth|credentials?)\.json$' "${cargo_package_list}"
@@ -51,9 +51,9 @@ cargo package --locked --allow-dirty --offline
 echo "==> verifying Cargo install"
 cargo_prefix="${tmp_root}/cargo-prefix"
 cargo install --path . --locked --root "${cargo_prefix}"
-"${cargo_prefix}/bin/any-switch" --version | grep -Fx "any-switch ${version}"
-ANY_SWITCH_HOME="${state_root}/cargo-home" "${cargo_prefix}/bin/any-switch" apps | grep -Eq '(^|[[:space:]])claude([[:space:]]|$)'
-ANY_SWITCH_HOME="${state_root}/cargo-home" "${cargo_prefix}/bin/any-switch" apps | grep -Eq '(^|[[:space:]])codex([[:space:]]|$)'
+"${cargo_prefix}/bin/ha-switch" --version | grep -Fx "ha-switch ${version}"
+HA_SWITCH_HOME="${state_root}/cargo-home" "${cargo_prefix}/bin/ha-switch" apps | grep -Eq '(^|[[:space:]])claude([[:space:]]|$)'
+HA_SWITCH_HOME="${state_root}/cargo-home" "${cargo_prefix}/bin/ha-switch" apps | grep -Eq '(^|[[:space:]])codex([[:space:]]|$)'
 
 echo "==> verifying npm package"
 npm_cache="${npm_config_cache:-${tmp_root}/npm-cache}"
@@ -80,21 +80,21 @@ require_line "package/Cargo.toml" "${npm_package_list}"
 require_line "package/src/main.rs" "${npm_package_list}"
 reject_pattern '^package/docs/' "${npm_package_list}"
 reject_pattern '^package/vendor/' "${npm_package_list}"
-reject_pattern '(^|/)(\.any-switch|\.claude|\.codex|\.smoke-|\.tmp)(/|$)' "${npm_package_list}"
+reject_pattern '(^|/)(\.ha-switch|\.claude|\.codex|\.smoke-|\.tmp)(/|$)' "${npm_package_list}"
 reject_pattern '^package/manual-evidence-[^/]*\.md$' "${npm_package_list}"
 reject_pattern '(^|/)(auth|credentials?)\.json$' "${npm_package_list}"
 
 echo "==> verifying npm install from packed tarball"
 npm_prefix="${tmp_root}/npm-prefix"
 npm_config_cache="${npm_cache}" npm install -g --prefix "${npm_prefix}" "${npm_tarball_path}"
-"${npm_prefix}/bin/any-switch" --version | grep -Fx "any-switch ${version}"
-ANY_SWITCH_HOME="${state_root}/npm-home" "${npm_prefix}/bin/any-switch" apps | grep -Eq '(^|[[:space:]])claude([[:space:]]|$)'
-ANY_SWITCH_HOME="${state_root}/npm-home" "${npm_prefix}/bin/any-switch" apps | grep -Eq '(^|[[:space:]])codex([[:space:]]|$)'
+"${npm_prefix}/bin/ha-switch" --version | grep -Fx "ha-switch ${version}"
+HA_SWITCH_HOME="${state_root}/npm-home" "${npm_prefix}/bin/ha-switch" apps | grep -Eq '(^|[[:space:]])claude([[:space:]]|$)'
+HA_SWITCH_HOME="${state_root}/npm-home" "${npm_prefix}/bin/ha-switch" apps | grep -Eq '(^|[[:space:]])codex([[:space:]]|$)'
 
 echo "==> verifying npx execution from packed tarball"
-npm_config_cache="${npm_cache}" npx --yes --package "${npm_tarball_path}" any-switch --version | grep -Fx "any-switch ${version}"
-ANY_SWITCH_HOME="${state_root}/npx-home" npm_config_cache="${npm_cache}" npx --yes --package "${npm_tarball_path}" any-switch apps | grep -Eq '(^|[[:space:]])claude([[:space:]]|$)'
-ANY_SWITCH_HOME="${state_root}/npx-home" npm_config_cache="${npm_cache}" npx --yes --package "${npm_tarball_path}" any-switch apps | grep -Eq '(^|[[:space:]])codex([[:space:]]|$)'
+npm_config_cache="${npm_cache}" npx --yes --package "${npm_tarball_path}" ha-switch --version | grep -Fx "ha-switch ${version}"
+HA_SWITCH_HOME="${state_root}/npx-home" npm_config_cache="${npm_cache}" npx --yes --package "${npm_tarball_path}" ha-switch apps | grep -Eq '(^|[[:space:]])claude([[:space:]]|$)'
+HA_SWITCH_HOME="${state_root}/npx-home" npm_config_cache="${npm_cache}" npx --yes --package "${npm_tarball_path}" ha-switch apps | grep -Eq '(^|[[:space:]])codex([[:space:]]|$)'
 
 echo "==> verifying npx error without Rust"
 npm_no_rust_bin="${tmp_root}/npm-no-rust-bin"
@@ -109,7 +109,7 @@ if env PATH="${no_rust_path}" bash -c 'command -v cargo >/dev/null 2>&1'; then
 fi
 no_rust_output="${tmp_root}/npx-no-rust.txt"
 set +e
-ANY_SWITCH_HOME="${state_root}/npx-no-rust-home" PATH="${no_rust_path}" npm_config_cache="${tmp_root}/npm-cache-no-rust" npx --yes --package "${npm_tarball_path}" any-switch --version >"${no_rust_output}" 2>&1
+HA_SWITCH_HOME="${state_root}/npx-no-rust-home" PATH="${no_rust_path}" npm_config_cache="${tmp_root}/npm-cache-no-rust" npx --yes --package "${npm_tarball_path}" ha-switch --version >"${no_rust_output}" 2>&1
 no_rust_status="$?"
 set -e
 if [[ "${no_rust_status}" -eq 0 ]]; then
@@ -117,4 +117,4 @@ if [[ "${no_rust_status}" -eq 0 ]]; then
   cat "${no_rust_output}" >&2
   exit 1
 fi
-grep -F "Rust toolchain is required to install any-switch from npm." "${no_rust_output}" >/dev/null
+grep -F "Rust toolchain is required to install ha-switch from npm." "${no_rust_output}" >/dev/null

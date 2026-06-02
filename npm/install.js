@@ -7,7 +7,7 @@ const path = require("path");
 
 const root = path.resolve(__dirname, "..");
 const vendorDir = path.join(root, "vendor");
-const binaryName = process.platform === "win32" ? "any-switch.exe" : "any-switch";
+const binaryName = process.platform === "win32" ? "ha-switch.exe" : "ha-switch";
 const binaryPath = path.join(vendorDir, binaryName);
 const strict = process.argv.includes("--strict");
 
@@ -42,13 +42,13 @@ function main() {
   if (!commandExists("cargo")) {
     throw new Error(
       [
-        "Rust toolchain is required to install any-switch from npm.",
-        "Install Rust from https://rustup.rs, then run `npm install -g any-switch` again."
+        "Rust toolchain is required to install ha-switch from npm.",
+        "Install Rust from https://rustup.rs, then run `npm install -g ha-switch` again."
       ].join("\n")
     );
   }
 
-  console.error("any-switch: building from source with Cargo");
+  console.error("ha-switch: building from source with Cargo");
   run("cargo", ["build", "--release", "--locked"]);
 
   const builtBinary = path.join(root, "target", "release", binaryName);
@@ -61,15 +61,15 @@ function main() {
   if (process.platform !== "win32") {
     fs.chmodSync(binaryPath, 0o755);
   }
-  console.error(`any-switch: installed ${binaryName}`);
+  console.error(`ha-switch: installed ${binaryName}`);
 }
 
 try {
   main();
 } catch (error) {
-  console.error(`any-switch: ${error.message}`);
+  console.error(`ha-switch: ${error.message}`);
   if (strict) {
     process.exit(1);
   }
-  console.error("any-switch: install will finish, but the command will build again when first run.");
+  console.error("ha-switch: install will finish, but the command will build again when first run.");
 }

@@ -1,5 +1,5 @@
 name: Bug report
-description: Report a reproducible any-switch bug.
+description: Report a reproducible ha-switch bug.
 title: "[bug]: "
 labels: ["bug"]
 body:
@@ -10,9 +10,9 @@ body:
   - type: input
     id: version
     attributes:
-      label: any-switch version
-      description: Output of `any-switch --version`.
-      placeholder: any-switch 0.1.2
+      label: ha-switch version
+      description: Output of `ha-switch --version`.
+      placeholder: ha-switch 0.1.2
     validations:
       required: true
   - type: dropdown
@@ -38,8 +38,8 @@ body:
       label: Reproduction steps
       description: Include commands, flags, and relevant environment variables. Redact secrets.
       placeholder: |
-        1. Run `any-switch doctor ...`
-        2. Run `any-switch use ...`
+        1. Run `ha-switch doctor ...`
+        2. Run `ha-switch use ...`
         3. Observe ...
     validations:
       required: true
@@ -60,7 +60,7 @@ body:
     id: diagnostics
     attributes:
       label: Diagnostics
-      description: Paste redacted `any-switch doctor` / `status` output, or attach a redacted manual evidence file.
+      description: Paste redacted `ha-switch doctor` / `status` output, or attach a redacted manual evidence file.
       render: text
   - type: checkboxes
     id: safety

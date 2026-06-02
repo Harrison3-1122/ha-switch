@@ -18,9 +18,9 @@ fn codex_oauth_import_use_and_writeback() {
     fs::create_dir_all(codex_home.path()).unwrap();
 
     write_codex_oauth(codex_home.path(), "acct-a", "refresh-a");
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["import-current", "codex", "a", "--kind", "oauth_capture"])
@@ -29,9 +29,9 @@ fn codex_oauth_import_use_and_writeback() {
         .stdout(contains("imported codex-a"));
 
     write_codex_oauth(codex_home.path(), "acct-b", "refresh-b");
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["import-current", "codex", "b", "--kind", "oauth_capture"])
@@ -39,9 +39,9 @@ fn codex_oauth_import_use_and_writeback() {
         .success()
         .stdout(contains("imported codex-b"));
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["use", "codex-a", "--yes"])
@@ -52,9 +52,9 @@ fn codex_oauth_import_use_and_writeback() {
     write_codex_oauth(codex_home.path(), "acct-a", "refresh-a-rotated");
     let profiles_before_writeback =
         fs::read_to_string(switch_home.path().join("profiles.yaml")).unwrap();
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["use", "codex-b", "--yes"])
@@ -98,9 +98,9 @@ fn codex_oauth_import_use_and_writeback() {
     .unwrap();
     assert!(backup_manifest.contains("\"requires_app_stopped\": true"));
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .args(["status", "codex"])
         .assert()
@@ -137,9 +137,9 @@ model_provider = "openai"
     .unwrap();
     write_codex_oauth(codex_home.path(), "acct-a", "refresh-a");
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["import-current", "codex", "personal"])
@@ -147,9 +147,9 @@ model_provider = "openai"
         .success()
         .stdout(contains("imported codex-personal"));
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .args(["show", "codex-personal"])
         .assert()
@@ -177,9 +177,9 @@ fn codex_import_accepts_legacy_api_key_without_mode_when_store_is_implicit() {
     )
     .unwrap();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["import-current", "codex", "legacy"])
@@ -187,9 +187,9 @@ fn codex_import_accepts_legacy_api_key_without_mode_when_store_is_implicit() {
         .success()
         .stdout(contains("imported codex-legacy"));
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .args(["show", "codex-legacy"])
         .assert()
@@ -225,9 +225,9 @@ model_provider = "token"
     )
     .unwrap();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["import-current", "codex", "legacy"])
@@ -235,9 +235,9 @@ model_provider = "token"
         .success()
         .stdout(contains("imported codex-legacy"));
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .args(["show", "codex-legacy"])
         .assert()
@@ -272,9 +272,9 @@ fn codex_import_rejects_mixed_chatgpt_and_api_key_auth() {
     )
     .unwrap();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["import-current", "codex", "mixed"])
@@ -316,9 +316,9 @@ trust_level = "trusted"
     .unwrap();
     write_codex_oauth(codex_home.path(), "acct-a", "refresh-a");
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["import-current", "codex", "toml", "--kind", "oauth_capture"])
@@ -353,18 +353,18 @@ trust_level = "changed"
     )
     .unwrap();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["detach", "codex"])
         .assert()
         .success();
 
-    Command::cargo_bin("any-switch")
+    Command::cargo_bin("ha-switch")
         .unwrap()
-        .env("ANY_SWITCH_HOME", switch_home.path())
+        .env("HA_SWITCH_HOME", switch_home.path())
         .env("CODEX_HOME", codex_home.path())
         .env("ANY_SWITCH_SKIP_PROCESS_PROBE", "1")
         .args(["use", "codex-toml", "--yes"])

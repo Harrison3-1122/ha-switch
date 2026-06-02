@@ -7,7 +7,7 @@ const childProcess = require("child_process");
 
 const root = path.resolve(__dirname, "..");
 const installScript = path.join(root, "npm", "install.js");
-const binaryName = process.platform === "win32" ? "any-switch.exe" : "any-switch";
+const binaryName = process.platform === "win32" ? "ha-switch.exe" : "ha-switch";
 const binaryPath = path.join(root, "vendor", binaryName);
 
 if (!fs.existsSync(binaryPath)) {

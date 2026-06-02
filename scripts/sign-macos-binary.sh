@@ -34,11 +34,11 @@ if [[ ! -f "${binary}" ]]; then
   exit 2
 fi
 
-temp_dir="$(mktemp -d "${TMPDIR:-/tmp}/any-switch-sign.XXXXXX")"
+temp_dir="$(mktemp -d "${TMPDIR:-/tmp}/ha-switch-sign.XXXXXX")"
 keychain="${temp_dir}/codesign.keychain-db"
 keychain_password="$(od -An -N32 -tx1 /dev/urandom | tr -d ' \n')"
 cert_path="${temp_dir}/certificate.p12"
-notary_zip="${temp_dir}/any-switch-notary.zip"
+notary_zip="${temp_dir}/ha-switch-notary.zip"
 
 cleanup() {
   security delete-keychain "${keychain}" >/dev/null 2>&1 || true

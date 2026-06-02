@@ -3,9 +3,9 @@ set -euo pipefail
 
 tag="${1:?usage: package-release.sh <tag> <target> [binary] [output-dir]}"
 target="${2:?usage: package-release.sh <tag> <target> [binary] [output-dir]}"
-binary_name="any-switch"
+binary_name="ha-switch"
 if [[ "${target}" == *-windows-* ]]; then
-  binary_name="any-switch.exe"
+  binary_name="ha-switch.exe"
 fi
 binary="${3:-target/${target}/release/${binary_name}}"
 output_dir="${4:-.}"
@@ -40,7 +40,7 @@ if [[ ! -f "${binary}" ]]; then
   exit 2
 fi
 
-package="any-switch-${tag}-${target}"
+package="ha-switch-${tag}-${target}"
 mkdir -p "${output_dir}"
 output_dir="$(cd "${output_dir}" && pwd)"
 staging_root="$(mktemp -d "${output_dir}/.package-${package}.XXXXXX")"
