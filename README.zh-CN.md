@@ -14,6 +14,8 @@
 
 当前内置应用是 Claude Code 和 OpenAI Codex。工具本身并不只面向 AI CLI：应用定义描述哪些本地状态可以被捕获和恢复，`ha-switch` 负责围绕这些状态做备份、脱敏、漂移检查和写入保护。
 
+`ha-switch` 是 [`riverscn/any-switch`](https://github.com/riverscn/any-switch) 的个人 fork。感谢原项目和作者打下的基础。用户侧命令、包名和默认状态目录都使用 `ha-switch`；对 `ANY_SWITCH_HOME` 的引用只保留为旧配置兼容说明。
+
 ## 它做什么
 
 `ha-switch` 在你的机器上保存命名 profile。一个 profile 是某个应用要使用的一组本地状态，例如：

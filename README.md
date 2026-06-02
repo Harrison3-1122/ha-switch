@@ -20,6 +20,12 @@ AI-specific: app definitions describe what local state can be captured and
 restored, and `ha-switch` handles the backup, redaction, drift checks, and
 write safety around that state.
 
+`ha-switch` is a personal fork of
+[`riverscn/any-switch`](https://github.com/riverscn/any-switch). Many thanks to
+the original project and its author for the foundation. The user-facing command,
+package name, and default state directory use `ha-switch`; references to
+`ANY_SWITCH_HOME` are kept only for legacy compatibility.
+
 ## What It Does
 
 `ha-switch` keeps named profiles on your machine. A profile is the local state
