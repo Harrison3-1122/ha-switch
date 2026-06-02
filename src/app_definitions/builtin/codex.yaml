@@ -45,6 +45,9 @@ kinds:
       provider_id:
         type: string
         required: false
+      history_provider:
+        type: string
+        required: false
     targets:
       - handler: file_capture
         path: ${CODEX_HOME:-~/.codex}/auth.json

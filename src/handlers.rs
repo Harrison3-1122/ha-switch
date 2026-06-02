@@ -128,6 +128,12 @@ fn merge_toml_managed_paths(
 ) -> Result<()> {
     for toml_path in &target.toml_paths {
         remove_toml_path(doc, toml_path);
+        if toml_path == "model_provider" {
+            if let Some(value) = lookup_field(profile, "history_provider") {
+                set_toml_item(doc, toml_path, value_to_toml_item(value));
+                continue;
+            }
+        }
         if let Some(value) = lookup_field(profile, toml_path) {
             set_toml_item(doc, toml_path, value_to_toml_item(value));
         }
@@ -141,7 +147,8 @@ fn merge_toml_managed_paths(
         let provider = lookup_field(profile, "model_provider")
             .and_then(Value::as_str)
             .unwrap_or("openai");
-        let provider_id = lookup_field(profile, "provider_id")
+        let provider_id = lookup_field(profile, "history_provider")
+            .or_else(|| lookup_field(profile, "provider_id"))
             .and_then(Value::as_str)
             .unwrap_or(provider);
         let providers = doc
@@ -728,5 +735,76 @@ mod tests {
             .unwrap();
         assert_eq!(doc["mcp_servers"]["foo"]["command"].as_str(), Some("bar"));
         assert_eq!(doc["model"].as_str(), Some("gpt-5-codex"));
+    }
+
+    #[test]
+    fn toml_managed_paths_can_share_codex_history_provider() {
+        let dir = tempdir().unwrap();
+        let path = dir.path().join("config.toml");
+        fs::write(&path, "model_provider = \"old\"\n").unwrap();
+        let mut fields = IndexMap::new();
+        fields.insert(
+            "model".to_string(),
+            Value::String("gpt-5.5".to_string()),
+        );
+        fields.insert(
+            "model_provider".to_string(),
+            Value::String("ikun".to_string()),
+        );
+        fields.insert(
+            "history_provider".to_string(),
+            Value::String("ha-shared".to_string()),
+        );
+        fields.insert(
+            "base_url".to_string(),
+            Value::String("https://api.example.test/v1".to_string()),
+        );
+        let profile = Profile {
+            id: "codex-ikun".into(),
+            app: "codex".into(),
+            kind: "file_template".into(),
+            schema_version: 1,
+            name: "ikun".into(),
+            notes: String::new(),
+            created_at: "now".into(),
+            fields,
+            identity: IndexMap::new(),
+            capture: None,
+            extensions: Value::Null,
+        };
+        let target = TargetDefinition {
+            handler: "toml_managed_paths".to_string(),
+            path: path.display().to_string(),
+            json_path: None,
+            managed_keys: Vec::new(),
+            mapping: Default::default(),
+            template: None,
+            toml_paths: vec![
+                "model".to_string(),
+                "model_provider".to_string(),
+                "model_providers".to_string(),
+            ],
+            import_json_matches: Default::default(),
+            import_json_required_strings: Vec::new(),
+            import_json_forbidden_strings: Vec::new(),
+            import_json_fields: Default::default(),
+            import_unmatched_error: None,
+            requires_app_stopped: false,
+        };
+        apply_toml_managed_paths(&path, &target, &profile).unwrap();
+        let doc = fs::read_to_string(path)
+            .unwrap()
+            .parse::<DocumentMut>()
+            .unwrap();
+        assert_eq!(doc["model"].as_str(), Some("gpt-5.5"));
+        assert_eq!(doc["model_provider"].as_str(), Some("ha-shared"));
+        assert_eq!(
+            doc["model_providers"]["ha-shared"]["name"].as_str(),
+            Some("ikun")
+        );
+        assert_eq!(
+            doc["model_providers"]["ha-shared"]["base_url"].as_str(),
+            Some("https://api.example.test/v1")
+        );
     }
 }
